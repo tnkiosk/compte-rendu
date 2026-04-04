@@ -1,247 +1,564 @@
-`<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Compte rendu Technicien</title>
- <link rel="manifest" href="manifest.webmanifest">
-<style>
-*{box-sizing:border-box}
-body{font-family:Arial,sans-serif;background:#f3f4f6;padding:12px;margin:0;color:#374151}
-.container{max-width:640px;margin:auto;background:#fff;padding:16px;border-radius:18px;box-shadow:0 10px 25px rgba(0,0,0,0.1)}
-h1{text-align:center;color:#f97316;font-size:28px;margin:0 0 16px}
-h2{text-align:center;color:#555;font-size:22px;margin:18px 0 12px}
-label{display:block;margin-top:10px;color:#666;font-weight:bold;font-size:14px}
-input[type="text"]{width:100%;padding:12px;border-radius:12px;border:1px solid #ddd;margin-top:5px;font-size:16px;background:#fff}
-.checkline{display:flex;align-items:center;gap:8px;margin-top:10px;color:#666;font-weight:bold}
-.checkline input{width:auto;margin:0}
-.stars{display:flex;flex-wrap:wrap;gap:2px}
-.stars button{font-size:34px;background:none;border:none;color:#ccc;cursor:pointer;padding:0 2px;line-height:1}
-.stars .active{color:#f97316}
-button{padding:12px 14px;border:none;border-radius:12px;cursor:pointer;font-size:15px}
-button.main{width:100%;padding:15px;margin-top:15px;background:#f97316;color:#fff;font-size:16px;font-weight:bold}
-button.small{margin-top:10px;background:#e5e7eb;color:#111827;width:100%}
-button.yn{margin-right:8px;margin-top:8px;background:#e5e7eb;color:#111827}
-button.yn.active{background:#fed7aa;color:#c2410c;font-weight:bold}
-.canvas-wrap{border:2px solid #f97316;border-radius:12px;margin-top:10px;background:#fff;overflow:hidden}
-canvas{display:block;width:100%;height:180px;touch-action:none;background:#fff}
-.box{background:#fff7ed;padding:10px;border-radius:10px;margin-top:10px;line-height:1.3;font-size:13px}
-.row{margin-top:10px}
-@media (max-width:480px){
- body{padding:8px}
- .container{padding:14px;border-radius:14px}
- h1{font-size:24px}
- h2{font-size:20px}
- .stars button{font-size:30px}
- canvas{height:160px}
- button.yn{width:calc(50% - 6px);margin-right:0}
-}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Compte rendu Technicien</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" type="image/png" sizes="512x512" href="logo.png" />
+  <link rel="apple-touch-icon" href="logo.png" />
+  <meta name="theme-color" content="#f97316" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Compte rendu" />
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: Arial, sans-serif;
+      background: #f3f4f6;
+      padding: 12px;
+      margin: 0;
+      color: #374151;
+    }
+    .container {
+      max-width: 640px;
+      margin: auto;
+      background: #fff;
+      padding: 16px;
+      border-radius: 18px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+    h1 {
+      text-align: center;
+      color: #f97316;
+      font-size: 28px;
+      margin: 0 0 16px;
+    }
+    h2 {
+      text-align: center;
+      color: #555;
+      font-size: 22px;
+      margin: 18px 0 12px;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+      color: #666;
+      font-weight: bold;
+      font-size: 14px;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid #ddd;
+      margin-top: 5px;
+      font-size: 16px;
+      background: #fff;
+    }
+    .checkline {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+      color: #666;
+      font-weight: bold;
+    }
+    .checkline input {
+      width: auto;
+      margin: 0;
+    }
+    .stars {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2px;
+    }
+    .stars button {
+      font-size: 34px;
+      background: none;
+      border: none;
+      color: #ccc;
+      cursor: pointer;
+      padding: 0 2px;
+      line-height: 1;
+    }
+    .stars .active { color: #f97316; }
+    button {
+      padding: 12px 14px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 15px;
+    }
+    button.main {
+      width: 100%;
+      padding: 15px;
+      margin-top: 15px;
+      background: #f97316;
+      color: #fff;
+      font-size: 16px;
+      font-weight: bold;
+    }
+    button.small {
+      margin-top: 10px;
+      background: #e5e7eb;
+      color: #111827;
+      width: 100%;
+    }
+    button.yn {
+      margin-right: 8px;
+      margin-top: 8px;
+      background: #e5e7eb;
+      color: #111827;
+    }
+    button.yn.active {
+      background: #fed7aa;
+      color: #c2410c;
+      font-weight: bold;
+    }
+    .canvas-wrap {
+      border: 2px solid #f97316;
+      border-radius: 12px;
+      margin-top: 10px;
+      background: #fff;
+      overflow: hidden;
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      height: 180px;
+      touch-action: none;
+      background: #fff;
+    }
+    .box {
+      background: #fff7ed;
+      padding: 10px;
+      border-radius: 10px;
+      margin-top: 10px;
+      line-height: 1.3;
+      font-size: 13px;
+    }
+    .row { margin-top: 10px; }
+    .step { display: none; }
+    .step.active { display: block; }
+    .photo-input {
+      width: 100%;
+      margin-top: 10px;
+      padding: 10px;
+      border: 1px dashed #f97316;
+      border-radius: 12px;
+      background: #fff7ed;
+    }
+    .photo-buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .photo-buttons button {
+      flex: 1;
+      margin-top: 0;
+    }
+    .photo-preview {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .photo-preview img {
+      width: 100%;
+      height: 140px;
+      object-fit: cover;
+      border-radius: 12px;
+      border: 1px solid #ddd;
+      background: #fff;
+    }
+    .step-indicator {
+      text-align: center;
+      font-size: 13px;
+      color: #777;
+      margin-bottom: 8px;
+    }
+    .actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    .actions button { flex: 1; }
+    .hidden { display: none !important; }
+    @media (max-width: 480px) {
+      body { padding: 8px; }
+      .container { padding: 14px; border-radius: 14px; }
+      h1 { font-size: 24px; }
+      h2 { font-size: 20px; }
+      .stars button { font-size: 30px; }
+      canvas { height: 160px; }
+      button.yn { width: calc(50% - 6px); margin-right: 0; }
+      .actions { flex-direction: column; }
+    }
+  </style>
 </head>
 <body>
-<div class="container">
-<h1>Compte rendu</h1>
+  <div class="container">
+    <h1>Compte rendu</h1>
+    <div id="stepIndicator" class="step-indicator">Étape 1 sur 5</div>
 
-<label>Nom</label>
-<input id="nom" type="text">
+    <div id="step1" class="step active">
+      <label>Nom</label>
+      <input id="nom" type="text" />
 
-<label>Prénom</label>
-<input id="prenom" type="text">
+      <label>Prénom</label>
+      <input id="prenom" type="text" />
 
-<label>Intervention</label>
-<input id="intervention" type="text">
+      <label>Intervention</label>
+      <input id="intervention" type="text" />
 
-<label>Date</label>
-<input id="date" type="text" readonly>
+      <label>Date</label>
+      <input id="date" type="text" readonly />
 
-<label>Heure</label>
-<input id="heure" type="text" readonly>
+      <label>Heure</label>
+      <input id="heure" type="text" readonly />
 
-<h2>Type intervention</h2>
-<label class="checkline"><input type="checkbox" id="restart"> <span>Restart</span></label>
-<label class="checkline"><input type="checkbox" id="protecline"> <span>Protecline</span></label>
+      <div class="actions">
+        <button class="main" type="button" onclick="goToStep2()">Valider</button>
+      </div>
+    </div>
 
-<h2>Évaluation</h2>
-<div>
-<label>Satisfaction technicien</label>
-<div id="tech" class="stars"></div>
-</div>
-<div>
-<label>Satisfaction intervention</label>
-<div id="inter" class="stars"></div>
-</div>
+    <div id="step2" class="step">
+      <h2>Type intervention</h2>
+      <label class="checkline"><input type="checkbox" id="restart" /> <span>Restart</span></label>
+      <label class="checkline"><input type="checkbox" id="protecline" /> <span>Protecline</span></label>
 
-<h2>Application</h2>
-<div class="row">
-<label>Le client a-t-il téléchargé l'application et activé son compte ?</label>
-<button class="yn" onclick="setYN('client','oui', this)">Oui</button>
-<button class="yn" onclick="setYN('client','non', this)">Non</button>
-</div>
-<div class="row">
-<label>Le technicien a-t-il installé l'application et activé le compte du client ?</label>
-<button class="yn" onclick="setYN('tech','oui', this)">Oui</button>
-<button class="yn" onclick="setYN('tech','non', this)">Non</button>
-</div>
+      <div id="photoSection">
+        <h2>Photos de l'installation</h2>
+        <div class="box">
+          Vous pouvez prendre des clichés de l'installation pour conserver une preuve visuelle de l'intervention.
+        </div>
+        <input id="photoInput" class="photo-input hidden" type="file" accept="image/*" capture="environment" multiple />
+        <div class="photo-buttons">
+          <button class="small" type="button" onclick="photoInput.click()">Prendre / ajouter des photos</button>
+          <button class="small" type="button" onclick="clearPhotos()">Effacer les photos</button>
+        </div>
+        <div id="photoPreview" class="photo-preview"></div>
+      </div>
 
-<div class="box">
-Le technicien a pris le temps d’accompagner le client dans l’installation de l’application et l’activation de son compte.<br>
-Les fonctionnalités principales ont été expliquées.<br>
-Le client confirme être autonome.
-</div>
+      <div class="actions">
+        <button class="small" type="button" onclick="showStep(1)">Retour</button>
+        <button class="main" type="button" onclick="goToStep3Or4()">Valider</button>
+      </div>
+    </div>
 
-<h2>Pourboire</h2>
-<div class="box">
-Le client peut, s’il le souhaite, remettre un pourboire au technicien à titre de remerciement pour la qualité de l’intervention réalisée.<br>
-Ce geste reste entièrement facultatif et relève de la seule initiative du client.<br>
-En validant ce document, le client reconnaît que ce pourboire constitue un geste volontaire lié à sa satisfaction concernant l’intervention.<br>
-Le client confirme également que tout matériel éventuellement laissé sur place a été remis gratuitement, sans facturation complémentaire.
-</div>
+    <div id="step3" class="step">
+      <h2>Application</h2>
+      <div class="row">
+        <label>Le client a-t-il téléchargé l'application et activé son compte ?</label>
+        <button class="yn" onclick="setYN('client','oui', this)">Oui</button>
+        <button class="yn" onclick="setYN('client','non', this)">Non</button>
+      </div>
+      <div class="row">
+        <label>Le technicien a-t-il installé l'application et activé le compte du client ?</label>
+        <button class="yn" onclick="setYN('tech','oui', this)">Oui</button>
+        <button class="yn" onclick="setYN('tech','non', this)">Non</button>
+      </div>
 
-<div class="row">
-<label>Avez-vous donné un pourboire ?</label>
-<button class="yn" onclick="setYN('tip','oui', this)">Oui</button>
-<button class="yn" onclick="setYN('tip','non', this)">Non</button>
-</div>
+      <div class="box">
+        Le technicien a pris le temps d’accompagner le client dans l’installation de l’application et l’activation de son compte.<br>
+        Les fonctionnalités principales ont été expliquées.<br>
+        Le client confirme être autonome.
+      </div>
 
-<h2>Signature</h2>
-<div class="canvas-wrap">
-<canvas id="sign"></canvas>
-</div>
-<button class="small" onclick="clearSign()">Effacer</button>
+      <div class="actions">
+        <button class="small" type="button" onclick="showStep(2)">Retour</button>
+        <button class="main" type="button" onclick="goToStep4()">Valider</button>
+      </div>
+    </div>
 
-<button class="main" onclick="valider()">Valider / PDF</button>
-</div>
+    <div id="step4" class="step">
+      <h2>Évaluation</h2>
+      <div>
+        <label>Satisfaction technicien</label>
+        <div id="tech" class="stars"></div>
+      </div>
+      <div>
+        <label>Satisfaction intervention</label>
+        <div id="inter" class="stars"></div>
+      </div>
 
-<script>
-let state={tech:0,inter:0,client:'',techYN:'',tip:'',signed:false}
+      <div class="actions">
+        <button class="small" type="button" onclick="goBackFromStep4()">Retour</button>
+        <button class="main" type="button" onclick="goToStep5()">Valider</button>
+      </div>
+    </div>
 
-function stars(id,key){
- const el=document.getElementById(id)
- el.innerHTML=''
- for(let i=1;i<=5;i++){
-  const b=document.createElement('button')
-  b.type='button'
-  b.innerHTML='★'
-  if(i<=state[key]) b.classList.add('active')
-  b.onclick=()=>{state[key]=i;stars(id,key)}
-  el.appendChild(b)
- }
-}
+    <div id="step5" class="step">
+      <h2>Gratification</h2>
+      <div class="box">
+        Le client peut, s’il le souhaite, remettre une gratification au technicien à titre de remerciement pour la qualité de l’intervention réalisée.<br>
+        En validant ce document, le client reconnaît que cette gratification constitue un geste volontaire lié à sa satisfaction concernant l’intervention.<br>
+        Le client confirme également que tout matériel éventuellement laissé sur place a été remis gratuitement, sans facturation complémentaire.
+      </div>
 
-function setYN(type,val,btn){
- if(type==='client') state.client=val
- else if(type==='tech') state.techYN=val
- else if(type==='tip') state.tip=val
- btn.parentElement.querySelectorAll('.yn').forEach(b=>b.classList.remove('active'))
- btn.classList.add('active')
-}
+      <div class="row">
+        <label>Avez-vous donné une gratification ?</label>
+        <button class="yn" onclick="setYN('tip','oui', this)">Oui</button>
+        <button class="yn" onclick="setYN('tip','non', this)">Non</button>
+      </div>
 
-const c=document.getElementById('sign')
-const ctx=c.getContext('2d')
-let d=false
+      <h2>Signature</h2>
+      <div class="canvas-wrap">
+        <canvas id="sign"></canvas>
+      </div>
+      <button class="small" onclick="clearSign()">Effacer</button>
 
-function resizeCanvas(){
- const ratio=Math.max(window.devicePixelRatio||1,1)
- const rect=c.getBoundingClientRect()
- c.width=Math.floor(rect.width*ratio)
- c.height=Math.floor(rect.height*ratio)
- ctx.setTransform(1,0,0,1,0,0)
- ctx.scale(ratio,ratio)
- ctx.lineWidth=2.2
- ctx.lineCap='round'
- ctx.strokeStyle='#111827'
-}
+      <div class="actions">
+        <button class="small" type="button" onclick="showStep(4)">Retour</button>
+        <button class="main" onclick="valider()">Valider / PDF</button>
+      </div>
+    </div>
+  </div>
 
-function pointFromEvent(e){
- const r=c.getBoundingClientRect()
- if(e.touches&&e.touches[0]) return {x:e.touches[0].clientX-r.left,y:e.touches[0].clientY-r.top}
- if(e.changedTouches&&e.changedTouches[0]) return {x:e.changedTouches[0].clientX-r.left,y:e.changedTouches[0].clientY-r.top}
- return {x:e.clientX-r.left,y:e.clientY-r.top}
-}
+  <script>
+    let state = { tech: 0, inter: 0, client: '', techYN: '', tip: '', signed: false, currentStep: 1, photos: [] };
 
-function startDraw(e){
- d=true
- const p=pointFromEvent(e)
- ctx.beginPath()
- ctx.moveTo(p.x,p.y)
- if(e.preventDefault) e.preventDefault()
-}
+    function updateStepIndicator() {
+      document.getElementById('stepIndicator').textContent = 'Étape ' + state.currentStep + ' sur 5';
+    }
 
-function moveDraw(e){
- if(!d) return
- const p=pointFromEvent(e)
- ctx.lineTo(p.x,p.y)
- ctx.stroke()
- state.signed=true
- if(e.preventDefault) e.preventDefault()
-}
+    function showStep(step) {
+      document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
+      document.getElementById('step' + step).classList.add('active');
+      state.currentStep = step;
+      updateStepIndicator();
+      if (step === 5) {
+        setTimeout(resizeCanvas, 50);
+      }
+    }
 
-function endDraw(e){
- if(!d) return
- d=false
- ctx.beginPath()
- if(e&&e.preventDefault) e.preventDefault()
-}
+    function goToStep2() {
+      if (!nom.value || !prenom.value || !intervention.value) {
+        alert('Remplir');
+        return;
+      }
+      showStep(2);
+    }
 
-function clearSign(){
- ctx.clearRect(0,0,c.width,c.height)
- resizeCanvas()
- state.signed=false
-}
+    function goToStep3Or4() {
+      if (!restart.checked && !protecline.checked) {
+        alert('Type intervention');
+        return;
+      }
+      if (protecline.checked) {
+        showStep(3);
+      } else {
+        showStep(4);
+      }
+    }
 
-function slugify(value){
- let s=String(value||'').trim()
- s=s.split(' ').join('-')
- s=s.split('/').join('-')
- s=s.split(':').join('-')
- return s
-}
+    function goToStep4() {
+      if (!state.client || !state.techYN) {
+        alert('Application');
+        return;
+      }
+      showStep(4);
+    }
 
-function valider(){
- if(!nom.value||!prenom.value||!intervention.value){alert('Remplir');return}
- if(!state.tech||!state.inter){alert('Notes');return}
- if(!state.client||!state.techYN){alert('App');return}
- if(!state.signed){alert('Signer');return}
+    function goBackFromStep4() {
+      if (protecline.checked) {
+        showStep(3);
+      } else {
+        showStep(2);
+      }
+    }
 
- const oldTitle=document.title
- const fileDate=slugify(date.value||'date')
- const fileNom=slugify(nom.value||'nom')
- const filePrenom=slugify(prenom.value||'prenom')
- const fileInter=slugify(intervention.value||'intervention')
- document.title=fileDate+'_'+fileNom+'_'+filePrenom+'_'+fileInter
+    function goToStep5() {
+      if (!state.tech || !state.inter) {
+        alert('Notes');
+        return;
+      }
+      showStep(5);
+    }
 
- setTimeout(function(){
-  window.print()
-  setTimeout(function(){
-   document.title=oldTitle
-  },1000)
- },50)
-}
+    function stars(id, key) {
+      const el = document.getElementById(id);
+      el.innerHTML = '';
+      for (let i = 1; i <= 5; i++) {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.innerHTML = '★';
+        if (i <= state[key]) b.classList.add('active');
+        b.onclick = () => { state[key] = i; stars(id, key); };
+        el.appendChild(b);
+      }
+    }
 
-function init(){
- const n=new Date()
- date.value=n.toLocaleDateString('fr-FR')
- heure.value=n.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})
- stars('tech','tech')
- stars('inter','inter')
- resizeCanvas()
-}
+    function setYN(type, val, btn) {
+      if (type === 'client') state.client = val;
+      else if (type === 'tech') state.techYN = val;
+      else if (type === 'tip') state.tip = val;
+      btn.parentElement.querySelectorAll('.yn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
 
-c.addEventListener('mousedown',startDraw)
-c.addEventListener('mousemove',moveDraw)
-c.addEventListener('mouseup',endDraw)
-c.addEventListener('mouseleave',endDraw)
-c.addEventListener('touchstart',startDraw,{passive:false})
-c.addEventListener('touchmove',moveDraw,{passive:false})
-c.addEventListener('touchend',endDraw,{passive:false})
-c.addEventListener('touchcancel',endDraw,{passive:false})
-window.addEventListener('resize',resizeCanvas)
-init()
-</script>
- <script>
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js');
-}
-</script>
+    const restart = document.getElementById('restart');
+    const protecline = document.getElementById('protecline');
+    const photoSection = document.getElementById('photoSection');
+    const photoInput = document.getElementById('photoInput');
+    const photoPreview = document.getElementById('photoPreview');
+
+    function renderPhotoPreview() {
+      photoPreview.innerHTML = '';
+      state.photos.forEach(function (src) {
+        const img = document.createElement('img');
+        img.src = src;
+        photoPreview.appendChild(img);
+      });
+    }
+
+    function clearPhotos() {
+      state.photos = [];
+      photoInput.value = '';
+      renderPhotoPreview();
+    }
+
+    function updatePhotoSection(openCamera) {
+      const interventionChecked = restart.checked || protecline.checked;
+      photoSection.style.display = interventionChecked ? 'block' : 'none';
+
+      if (!interventionChecked) {
+        clearPhotos();
+      }
+
+      if (openCamera && interventionChecked) {
+        photoInput.click();
+      }
+    }
+
+    restart.addEventListener('change', function () {
+      updatePhotoSection(restart.checked);
+    });
+
+    protecline.addEventListener('change', function () {
+      updatePhotoSection(protecline.checked);
+    });
+
+    photoInput.addEventListener('change', function () {
+      Array.from(photoInput.files).forEach(function (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          state.photos.push(e.target.result);
+          renderPhotoPreview();
+        };
+        reader.readAsDataURL(file);
+      });
+      photoInput.value = '';
+    });
+
+    const c = document.getElementById('sign');
+    const ctx = c.getContext('2d');
+    let d = false;
+
+    function resizeCanvas() {
+      const ratio = Math.max(window.devicePixelRatio || 1, 1);
+      const rect = c.getBoundingClientRect();
+      c.width = Math.floor(rect.width * ratio);
+      c.height = Math.floor(rect.height * ratio);
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.scale(ratio, ratio);
+      ctx.lineWidth = 2.2;
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = '#111827';
+    }
+
+    function pointFromEvent(e) {
+      const r = c.getBoundingClientRect();
+      if (e.touches && e.touches[0]) return { x: e.touches[0].clientX - r.left, y: e.touches[0].clientY - r.top };
+      if (e.changedTouches && e.changedTouches[0]) return { x: e.changedTouches[0].clientX - r.left, y: e.changedTouches[0].clientY - r.top };
+      return { x: e.clientX - r.left, y: e.clientY - r.top };
+    }
+
+    function startDraw(e) {
+      d = true;
+      const p = pointFromEvent(e);
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y);
+      if (e.preventDefault) e.preventDefault();
+    }
+
+    function moveDraw(e) {
+      if (!d) return;
+      const p = pointFromEvent(e);
+      ctx.lineTo(p.x, p.y);
+      ctx.stroke();
+      state.signed = true;
+      if (e.preventDefault) e.preventDefault();
+    }
+
+    function endDraw(e) {
+      if (!d) return;
+      d = false;
+      ctx.beginPath();
+      if (e && e.preventDefault) e.preventDefault();
+    }
+
+    function clearSign() {
+      ctx.clearRect(0, 0, c.width, c.height);
+      resizeCanvas();
+      state.signed = false;
+    }
+
+    function slugify(value) {
+      let s = String(value || '').trim();
+      s = s.split(' ').join('-');
+      s = s.split('/').join('-');
+      s = s.split(':').join('-');
+      return s;
+    }
+
+    function valider() {
+      if (!state.tip) { alert('Gratification'); return; }
+      if (!state.signed) { alert('Signer'); return; }
+
+      const oldTitle = document.title;
+      const fileDate = slugify(date.value || 'date');
+      const fileNom = slugify(nom.value || 'nom');
+      const filePrenom = slugify(prenom.value || 'prenom');
+      const fileInter = slugify(intervention.value || 'intervention');
+      document.title = fileDate + '_' + fileNom + '_' + filePrenom + '_' + fileInter;
+
+      setTimeout(function () {
+        window.print();
+        setTimeout(function () {
+          document.title = oldTitle;
+        }, 1000);
+      }, 50);
+    }
+
+    function init() {
+      const n = new Date();
+      date.value = n.toLocaleDateString('fr-FR');
+      heure.value = n.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+      stars('tech', 'tech');
+      stars('inter', 'inter');
+      resizeCanvas();
+      updatePhotoSection(false);
+      showStep(1);
+    }
+
+    c.addEventListener('mousedown', startDraw);
+    c.addEventListener('mousemove', moveDraw);
+    c.addEventListener('mouseup', endDraw);
+    c.addEventListener('mouseleave', endDraw);
+    c.addEventListener('touchstart', startDraw, { passive: false });
+    c.addEventListener('touchmove', moveDraw, { passive: false });
+    c.addEventListener('touchend', endDraw, { passive: false });
+    c.addEventListener('touchcancel', endDraw, { passive: false });
+    window.addEventListener('resize', resizeCanvas);
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js');
+    }
+
+    init();
+  </script>
 </body>
-</html>`;
+</html>
