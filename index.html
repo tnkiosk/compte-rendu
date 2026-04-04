@@ -325,6 +325,17 @@
     </div>
 
     <div id="step4" class="step">
+      <h2>Commentaire technicien</h2>
+      <label>Commentaire libre</label>
+      <textarea id="commentaire" style="width:100%;min-height:120px;padding:12px;border-radius:12px;border:1px solid #ddd;margin-top:5px;font-size:16px;"></textarea>
+
+      <div class="actions">
+        <button class="small" type="button" onclick="goBackFromStep4()">Retour</button>
+        <button class="main" type="button" onclick="goToStep4b()">Valider</button>
+      </div>
+    </div>
+
+    <div id="step4b" class="step">
       <h2>Évaluation</h2>
       <div>
         <label>Satisfaction technicien</label>
@@ -336,7 +347,7 @@
       </div>
 
       <div class="actions">
-        <button class="small" type="button" onclick="goBackFromStep4()">Retour</button>
+        <button class="small" type="button" onclick="showStep(4)">Retour</button>
         <button class="main" type="button" onclick="goToStep5()">Valider</button>
       </div>
     </div>
@@ -428,7 +439,7 @@
 
     function showStep(step) {
       document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
-      document.getElementById('step' + step).classList.add('active');
+      document.getElementById(step === 4.1 ? 'step4b' : 'step' + step).classList.add('active');
       state.currentStep = step;
       updateStepIndicator();
       if (step === 5) {
@@ -470,6 +481,10 @@
       } else {
         showStep(2);
       }
+    }
+
+    function goToStep4b() {
+      showStep(4.1);
     }
 
     function goToStep5() {
@@ -628,6 +643,16 @@
       document.getElementById('printTechApp').textContent = state.techYN || 'Non renseigné';
       document.getElementById('printTechStars').textContent = state.tech ? state.tech + ' / 5' : '';
       document.getElementById('printInterStars').textContent = state.inter ? state.inter + ' / 5' : '';
+      const commentaire = document.getElementById('commentaire')?.value || '';
+      let commentaireLine = document.getElementById('printCommentaire');
+      if (!commentaireLine) {
+        const div = document.createElement('div');
+        div.className = 'summary-line';
+        div.id = 'printCommentaire';
+        document.getElementById('printApplicationCard').after(div);
+        commentaireLine = div;
+      }
+      commentaireLine.innerHTML = '<strong>Commentaire technicien :</strong> ' + commentaire;
       document.getElementById('printTip').textContent = state.tip || '';
 
       document.getElementById('printApplicationCard').style.display = protecline.checked ? 'block' : 'none';
