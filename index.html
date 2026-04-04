@@ -186,6 +186,57 @@
     }
     .actions button { flex: 1; }
     .hidden { display: none !important; }
+    #printSummary { display: none; }
+    .summary-card {
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 12px;
+      margin-top: 12px;
+      background: #fff;
+    }
+    .summary-title {
+      font-weight: bold;
+      color: #f97316;
+      margin-bottom: 8px;
+    }
+    .summary-line {
+      margin-top: 6px;
+      font-size: 14px;
+    }
+    .summary-photos {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .summary-photos img {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+    }
+    .signature-print-wrap {
+      margin-top: 10px;
+      border: 2px solid #f97316;
+      border-radius: 12px;
+      background: #fff;
+      min-height: 180px;
+      overflow: hidden;
+    }
+    .signature-print-wrap img {
+      width: 100%;
+      height: 180px;
+      object-fit: contain;
+      display: block;
+      background: #fff;
+    }
+    @media print {
+      body { background: #fff; padding: 0; }
+      .container { box-shadow: none; border-radius: 0; max-width: 100%; }
+      #stepIndicator, .step, .actions, .small, .main { display: none !important; }
+      #printSummary { display: block !important; }
+    }
     @media (max-width: 480px) {
       body { padding: 8px; }
       .container { padding: 14px; border-radius: 14px; }
@@ -313,6 +364,57 @@
       <div class="actions">
         <button class="small" type="button" onclick="showStep(4)">Retour</button>
         <button class="main" onclick="valider()">Valider / PDF</button>
+      </div>
+    </div>
+
+    <div id="printSummary">
+      <h2>Compte rendu complet</h2>
+
+      <div class="summary-card">
+        <div class="summary-title">Informations générales</div>
+        <div class="summary-line"><strong>Nom :</strong> <span id="printNom"></span></div>
+        <div class="summary-line"><strong>Prénom :</strong> <span id="printPrenom"></span></div>
+        <div class="summary-line"><strong>Intervention :</strong> <span id="printIntervention"></span></div>
+        <div class="summary-line"><strong>Date :</strong> <span id="printDate"></span></div>
+        <div class="summary-line"><strong>Heure :</strong> <span id="printHeure"></span></div>
+      </div>
+
+      <div class="summary-card">
+        <div class="summary-title">Type d'intervention</div>
+        <div class="summary-line"><strong>Restart :</strong> <span id="printRestart"></span></div>
+        <div class="summary-line"><strong>Protecline :</strong> <span id="printProtecline"></span></div>
+      </div>
+
+      <div class="summary-card" id="printPhotosCard">
+        <div class="summary-title">Photos de l'installation</div>
+        <div id="printPhotos" class="summary-photos"></div>
+      </div>
+
+      <div class="summary-card" id="printApplicationCard">
+        <div class="summary-title">Application</div>
+        <div class="summary-line"><strong>Client a téléchargé et activé :</strong> <span id="printClientApp"></span></div>
+        <div class="summary-line"><strong>Technicien a installé et activé :</strong> <span id="printTechApp"></span></div>
+      </div>
+
+      <div class="summary-card">
+        <div class="summary-title">Évaluation</div>
+        <div class="summary-line"><strong>Satisfaction technicien :</strong> <span id="printTechStars"></span></div>
+        <div class="summary-line"><strong>Satisfaction intervention :</strong> <span id="printInterStars"></span></div>
+      </div>
+
+      <div class="summary-card">
+        <div class="summary-title">Gratification</div>
+        <div class="summary-line">Le client peut, s’il le souhaite, remettre une gratification au technicien à titre de remerciement pour la qualité de l’intervention réalisée.</div>
+        <div class="summary-line">En validant ce document, le client reconnaît que cette gratification constitue un geste volontaire lié à sa satisfaction concernant l’intervention.</div>
+        <div class="summary-line">Le client confirme également que tout matériel éventuellement laissé sur place a été remis gratuitement, sans facturation complémentaire.</div>
+        <div class="summary-line"><strong>Gratification donnée :</strong> <span id="printTip"></span></div>
+      </div>
+
+      <div class="summary-card">
+        <div class="summary-title">Signature</div>
+        <div class="signature-print-wrap">
+          <img id="printSignature" alt="Signature" />
+        </div>
       </div>
     </div>
   </div>
@@ -514,9 +616,39 @@
       return s;
     }
 
+    function fillPrintSummary() {
+      document.getElementById('printNom').textContent = nom.value || '';
+      document.getElementById('printPrenom').textContent = prenom.value || '';
+      document.getElementById('printIntervention').textContent = intervention.value || '';
+      document.getElementById('printDate').textContent = date.value || '';
+      document.getElementById('printHeure').textContent = heure.value || '';
+      document.getElementById('printRestart').textContent = restart.checked ? 'Oui' : 'Non';
+      document.getElementById('printProtecline').textContent = protecline.checked ? 'Oui' : 'Non';
+      document.getElementById('printClientApp').textContent = state.client || 'Non renseigné';
+      document.getElementById('printTechApp').textContent = state.techYN || 'Non renseigné';
+      document.getElementById('printTechStars').textContent = state.tech ? state.tech + ' / 5' : '';
+      document.getElementById('printInterStars').textContent = state.inter ? state.inter + ' / 5' : '';
+      document.getElementById('printTip').textContent = state.tip || '';
+
+      document.getElementById('printApplicationCard').style.display = protecline.checked ? 'block' : 'none';
+      document.getElementById('printPhotosCard').style.display = state.photos.length ? 'block' : 'none';
+
+      const printPhotos = document.getElementById('printPhotos');
+      printPhotos.innerHTML = '';
+      state.photos.forEach(function (src) {
+        const img = document.createElement('img');
+        img.src = src;
+        printPhotos.appendChild(img);
+      });
+
+      document.getElementById('printSignature').src = state.signed ? c.toDataURL('image/png') : '';
+    }
+
     function valider() {
       if (!state.tip) { alert('Gratification'); return; }
       if (!state.signed) { alert('Signer'); return; }
+
+      fillPrintSummary();
 
       const oldTitle = document.title;
       const fileDate = slugify(date.value || 'date');
@@ -530,7 +662,7 @@
         setTimeout(function () {
           document.title = oldTitle;
         }, 1000);
-      }, 50);
+      }, 100);
     }
 
     function init() {
