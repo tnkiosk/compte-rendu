@@ -1,4 +1,4 @@
-const CACHE_NAME = 'compte-rendu-v3';
+const CACHE_NAME = 'compte-rendu-v4';
 
 const URLS_TO_CACHE = [
   '/compte-rendu/',
@@ -7,9 +7,8 @@ const URLS_TO_CACHE = [
   '/compte-rendu/manifest.webmanifest'
 ];
 
-// Installation
 self.addEventListener('install', (event) => {
-  self.skipWaiting(); // force la mise à jour
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(URLS_TO_CACHE);
@@ -17,7 +16,6 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// Activation (supprime anciens caches)
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
@@ -28,16 +26,26 @@ self.addEventListener('activate', (event) => {
           }
         })
       );
-    })
+    }).then(() => self.clients.claim())
   );
-  self.clients.claim(); // prend le contrôle direct
 });
 
-// Requête
 self.addEventListener('fetch', (event) => {
+  if (event.request.method !== 'GET') return;
+
   event.respondWith(
-    caches.match(event.request).then((response) => {
-      return response || fetch(event.request);
-    })
+    fetch(event.request)
+      .then((response) => {
+        const responseClone = response.clone();
+        caches.open(CACHE_NAME).then((cache) => {
+          cache.put(event.request, responseClone);
+        });
+        return response;
+      })
+      .catch(() => {
+        return caches.match(event.request).then((response) => {
+          return response || caches.match('/compte-rendu/index.html');
+        });
+      })
   );
 });
