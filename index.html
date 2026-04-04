@@ -238,5 +238,10 @@ c.addEventListener('touchcancel',endDraw,{passive:false})
 window.addEventListener('resize',resizeCanvas)
 init()
 </script>
+ <script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
+</script>
 </body>
 </html>`;
