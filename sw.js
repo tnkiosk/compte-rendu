@@ -1,4 +1,4 @@
-const CACHE_NAME = 'compte-rendu-v1';
+const CACHE_NAME = 'compte-rendu-v3';
 
 const URLS_TO_CACHE = [
   '/compte-rendu/',
