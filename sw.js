@@ -1,4 +1,4 @@
-const CACHE_NAME = 'compte-rendu-v4';
+const CACHE_NAME = 'compte-rendu-v5';
 
 const URLS_TO_CACHE = [
   '/compte-rendu/',
@@ -20,9 +20,9 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
-        cacheNames.map((cache) => {
-          if (cache !== CACHE_NAME) {
-            return caches.delete(cache);
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_NAME) {
+            return caches.delete(cacheName);
           }
         })
       );
