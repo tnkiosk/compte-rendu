@@ -5,8 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Compte rendu Technicien</title>
   <link rel="manifest" href="manifest.webmanifest" />
-  <link rel="icon" type="image/png" sizes="512x512" href="logo.png" />
-  <link rel="apple-touch-icon" href="logo.png" />
   <meta name="theme-color" content="#f97316" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -14,6 +12,7 @@
   <meta name="apple-mobile-web-app-title" content="Compte rendu" />
   <style>
     * { box-sizing: border-box; }
+
     body {
       font-family: Arial, sans-serif;
       background: #f3f4f6;
@@ -21,7 +20,9 @@
       margin: 0;
       color: #374151;
     }
-    .container {
+
+    .container,
+    .login-container {
       max-width: 640px;
       margin: auto;
       background: #fff;
@@ -29,18 +30,65 @@
       border-radius: 18px;
       box-shadow: 0 10px 25px rgba(0,0,0,0.1);
     }
+
+    .login-wrap {
+      min-height: calc(100vh - 24px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .login-logo {
+      display: block;
+      width: 120px;
+      height: 120px;
+      margin: 0 auto 12px;
+      border-radius: 18px;
+      background: #fff7ed;
+      padding: 10px;
+    }
+
+    .login-logo-svg {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .login-logo-svg svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .login-title {
+      text-align: center;
+      color: #f97316;
+      font-size: 28px;
+      margin: 0 0 8px;
+      font-weight: bold;
+    }
+
+    .login-subtitle {
+      text-align: center;
+      color: #666;
+      font-size: 14px;
+      margin-bottom: 16px;
+    }
+
     h1 {
       text-align: center;
       color: #f97316;
       font-size: 28px;
       margin: 0 0 16px;
     }
+
     h2 {
       text-align: center;
       color: #555;
       font-size: 22px;
       margin: 18px 0 12px;
     }
+
     label {
       display: block;
       margin-top: 10px;
@@ -48,7 +96,10 @@
       font-weight: bold;
       font-size: 14px;
     }
-    input[type="text"] {
+
+    input[type="text"],
+    input[type="password"],
+    textarea {
       width: 100%;
       padding: 12px;
       border-radius: 12px;
@@ -57,23 +108,29 @@
       font-size: 16px;
       background: #fff;
     }
+
     .checkline {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       gap: 8px;
       margin-top: 10px;
       color: #666;
       font-weight: bold;
+      line-height: 1.4;
     }
+
     .checkline input {
       width: auto;
-      margin: 0;
+      margin: 2px 0 0 0;
+      flex-shrink: 0;
     }
+
     .stars {
       display: flex;
       flex-wrap: wrap;
       gap: 2px;
     }
+
     .stars button {
       font-size: 34px;
       background: none;
@@ -83,7 +140,11 @@
       padding: 0 2px;
       line-height: 1;
     }
-    .stars .active { color: #f97316; }
+
+    .stars .active {
+      color: #f97316;
+    }
+
     button {
       padding: 12px 14px;
       border: none;
@@ -91,6 +152,7 @@
       cursor: pointer;
       font-size: 15px;
     }
+
     button.main {
       width: 100%;
       padding: 15px;
@@ -100,23 +162,27 @@
       font-size: 16px;
       font-weight: bold;
     }
+
     button.small {
       margin-top: 10px;
       background: #e5e7eb;
       color: #111827;
       width: 100%;
     }
+
     button.yn {
       margin-right: 8px;
       margin-top: 8px;
       background: #e5e7eb;
       color: #111827;
     }
+
     button.yn.active {
       background: #fed7aa;
       color: #c2410c;
       font-weight: bold;
     }
+
     .canvas-wrap {
       border: 2px solid #f97316;
       border-radius: 12px;
@@ -124,6 +190,7 @@
       background: #fff;
       overflow: hidden;
     }
+
     canvas {
       display: block;
       width: 100%;
@@ -131,17 +198,28 @@
       touch-action: none;
       background: #fff;
     }
+
     .box {
       background: #fff7ed;
       padding: 10px;
       border-radius: 10px;
       margin-top: 10px;
-      line-height: 1.3;
+      line-height: 1.4;
       font-size: 13px;
     }
-    .row { margin-top: 10px; }
-    .step { display: none; }
-    .step.active { display: block; }
+
+    .row {
+      margin-top: 10px;
+    }
+
+    .step {
+      display: none;
+    }
+
+    .step.active {
+      display: block;
+    }
+
     .photo-input {
       width: 100%;
       margin-top: 10px;
@@ -150,21 +228,25 @@
       border-radius: 12px;
       background: #fff7ed;
     }
+
     .photo-buttons {
       display: flex;
       gap: 10px;
       margin-top: 10px;
     }
+
     .photo-buttons button {
       flex: 1;
       margin-top: 0;
     }
+
     .photo-preview {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 10px;
       margin-top: 12px;
     }
+
     .photo-preview img {
       width: 100%;
       height: 140px;
@@ -173,42 +255,77 @@
       border: 1px solid #ddd;
       background: #fff;
     }
+
     .step-indicator {
       text-align: center;
       font-size: 13px;
       color: #777;
       margin-bottom: 8px;
     }
+
     .actions {
       display: flex;
       gap: 10px;
       margin-top: 16px;
     }
-    .actions button { flex: 1; }
-    .hidden { display: none !important; }
-    #printSummary { display: none; }
+
+    .actions button {
+      flex: 1;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .error-msg {
+      margin-top: 12px;
+      background: #fef2f2;
+      color: #b91c1c;
+      border: 1px solid #fecaca;
+      border-radius: 12px;
+      padding: 10px;
+      font-size: 14px;
+      text-align: center;
+    }
+
+    #appShell.hidden-app {
+      display: none;
+    }
+
+    #printSummary {
+      display: none;
+    }
+
     .summary-card {
       border: 1px solid #e5e7eb;
       border-radius: 12px;
       padding: 12px;
       margin-top: 12px;
       background: #fff;
+      page-break-inside: avoid;
     }
+
     .summary-title {
       font-weight: bold;
       color: #f97316;
       margin-bottom: 8px;
     }
+
     .summary-line {
       margin-top: 6px;
       font-size: 14px;
+      line-height: 1.4;
+      word-break: break-word;
+      white-space: pre-wrap;
     }
+
     .summary-photos {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 10px;
       margin-top: 10px;
     }
+
     .summary-photos img {
       width: 100%;
       height: 180px;
@@ -216,6 +333,7 @@
       border-radius: 10px;
       border: 1px solid #ddd;
     }
+
     .signature-print-wrap {
       margin-top: 10px;
       border: 2px solid #f97316;
@@ -224,6 +342,7 @@
       min-height: 180px;
       overflow: hidden;
     }
+
     .signature-print-wrap img {
       width: 100%;
       height: 180px;
@@ -231,225 +350,444 @@
       display: block;
       background: #fff;
     }
+
     @media print {
-      body { background: #fff; padding: 0; }
-      .container { box-shadow: none; border-radius: 0; max-width: 100%; }
-      #stepIndicator, .step, .actions, .small, .main { display: none !important; }
-      #printSummary { display: block !important; }
+      body {
+        background: #fff;
+        padding: 0;
+      }
+
+      #loginScreen {
+        display: none !important;
+      }
+
+      .container {
+        box-shadow: none;
+        border-radius: 0;
+        max-width: 100%;
+      }
+
+      #stepIndicator,
+      .step,
+      .actions,
+      .small,
+      .main {
+        display: none !important;
+      }
+
+      #printSummary {
+        display: block !important;
+      }
     }
+
     @media (max-width: 480px) {
-      body { padding: 8px; }
-      .container { padding: 14px; border-radius: 14px; }
-      h1 { font-size: 24px; }
-      h2 { font-size: 20px; }
-      .stars button { font-size: 30px; }
-      canvas { height: 160px; }
-      button.yn { width: calc(50% - 6px); margin-right: 0; }
-      .actions { flex-direction: column; }
+      body {
+        padding: 8px;
+      }
+
+      .container,
+      .login-container {
+        padding: 14px;
+        border-radius: 14px;
+      }
+
+      h1,
+      .login-title {
+        font-size: 24px;
+      }
+
+      h2 {
+        font-size: 20px;
+      }
+
+      .stars button {
+        font-size: 30px;
+      }
+
+      canvas {
+        height: 160px;
+      }
+
+      button.yn {
+        width: calc(50% - 6px);
+        margin-right: 0;
+      }
+
+      .actions,
+      .photo-buttons {
+        flex-direction: column;
+      }
+
+      .login-logo {
+        width: 100px;
+        height: 100px;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Compte rendu</h1>
-    <div id="stepIndicator" class="step-indicator">Étape 1 sur 5</div>
+  <div id="loginScreen" class="login-wrap">
+    <div class="login-container">
+      <div class="login-logo login-logo-svg" aria-label="Logo">
+        <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Logo Compte rendu">
+          <rect x="6" y="6" width="108" height="108" rx="22" fill="#fff7ed" stroke="#f97316" stroke-width="6"/>
+          <circle cx="60" cy="36" r="12" fill="#f97316"/>
+          <path d="M34 78c4-14 16-22 26-22s22 8 26 22" fill="none" stroke="#f97316" stroke-width="8" stroke-linecap="round"/>
+          <path d="M42 94h36" stroke="#ea580c" stroke-width="8" stroke-linecap="round"/>
+        </svg>
+      </div>
 
-    <div id="step1" class="step active">
-      <label>Nom</label>
-      <input id="nom" type="text" />
+      <div class="login-title">Compte rendu</div>
+      <div class="login-subtitle">Connexion sécurisée</div>
 
-      <label>Prénom</label>
-      <input id="prenom" type="text" />
+      <label>Identifiant</label>
+      <input id="loginId" type="text" autocomplete="username" />
 
-      <label>Intervention</label>
-      <input id="intervention" type="text" />
+      <label>Mot de passe</label>
+      <input id="loginPassword" type="password" autocomplete="current-password" />
 
-      <label>Date</label>
-      <input id="date" type="text" readonly />
+      <button class="main" type="button" onclick="loginApp()">Se connecter</button>
 
-      <label>Heure</label>
-      <input id="heure" type="text" readonly />
-
-      <div class="actions">
-        <button class="main" type="button" onclick="goToStep2()">Valider</button>
+      <div id="loginError" class="error-msg hidden">
+        Identifiant ou mot de passe incorrect.
       </div>
     </div>
+  </div>
 
-    <div id="step2" class="step">
-      <h2>Type intervention</h2>
-      <label class="checkline"><input type="checkbox" id="restart" /> <span>Restart</span></label>
-      <label class="checkline"><input type="checkbox" id="protecline" /> <span>Protecline</span></label>
+  <div id="appShell" class="hidden-app">
+    <div class="container">
+      <h1>Compte rendu</h1>
+      <div id="stepIndicator" class="step-indicator">Étape 1 sur 5</div>
 
-      <div id="photoSection">
-        <h2>Photos de l'installation</h2>
+      <div id="step1" class="step active">
+        <label>Nom</label>
+        <input id="nom" type="text" />
+
+        <label>Prénom</label>
+        <input id="prenom" type="text" />
+
+        <label>Adresse</label>
+        <input id="adresse" type="text" />
+
+        <label>Intervention</label>
+        <input id="intervention" type="text" />
+
+        <label>Date</label>
+        <input id="date" type="text" readonly />
+
+        <label>Heure</label>
+        <input id="heure" type="text" readonly />
+
+        <div class="actions">
+          <button class="main" type="button" onclick="goToStep2()">Valider</button>
+        </div>
+      </div>
+
+      <div id="step2" class="step">
+        <h2>Type intervention</h2>
+
+        <label class="checkline">
+          <input type="checkbox" id="restart" />
+          <span>Restart</span>
+        </label>
+
+        <label class="checkline">
+          <input type="checkbox" id="protecline" />
+          <span>Protecline</span>
+        </label>
+
+        <div id="photoSection">
+          <h2>Photos de l'installation</h2>
+          <div class="box">
+            Vous pouvez prendre des clichés de l'installation pour conserver une preuve visuelle de l'intervention.
+          </div>
+
+          <input id="photoInput" class="photo-input hidden" type="file" accept="image/*" capture="environment" multiple />
+
+          <div class="photo-buttons">
+            <button class="small" type="button" onclick="photoInput.click()">Prendre / ajouter des photos</button>
+            <button class="small" type="button" onclick="clearPhotos()">Effacer les photos</button>
+          </div>
+
+          <div id="photoPreview" class="photo-preview"></div>
+        </div>
+
+        <div class="actions">
+          <button class="small" type="button" onclick="showStep(1)">Retour</button>
+          <button class="main" type="button" onclick="goToStep3Or4()">Valider</button>
+        </div>
+      </div>
+
+      <div id="step3" class="step">
+        <h2>Application</h2>
+
+        <div class="row">
+          <label>Le client a-t-il téléchargé l'application et activé son compte ?</label>
+          <button class="yn" type="button" onclick="setYN('client','oui', this)">Oui</button>
+          <button class="yn" type="button" onclick="setYN('client','non', this)">Non</button>
+        </div>
+
+        <div class="row">
+          <label>Le technicien a-t-il installé l'application et activé le compte du client ?</label>
+          <button class="yn" type="button" onclick="setYN('tech','oui', this)">Oui</button>
+          <button class="yn" type="button" onclick="setYN('tech','non', this)">Non</button>
+        </div>
+
         <div class="box">
-          Vous pouvez prendre des clichés de l'installation pour conserver une preuve visuelle de l'intervention.
+          Le technicien a pris le temps d’accompagner le client dans l’installation de l’application et l’activation de son compte.<br>
+          Les fonctionnalités principales ont été expliquées.<br>
+          Le client confirme être autonome.
         </div>
-        <input id="photoInput" class="photo-input hidden" type="file" accept="image/*" capture="environment" multiple />
-        <div class="photo-buttons">
-          <button class="small" type="button" onclick="photoInput.click()">Prendre / ajouter des photos</button>
-          <button class="small" type="button" onclick="clearPhotos()">Effacer les photos</button>
+
+        <div class="actions">
+          <button class="small" type="button" onclick="showStep(2)">Retour</button>
+          <button class="main" type="button" onclick="goToStep4()">Valider</button>
         </div>
-        <div id="photoPreview" class="photo-preview"></div>
       </div>
 
-      <div class="actions">
-        <button class="small" type="button" onclick="showStep(1)">Retour</button>
-        <button class="main" type="button" onclick="goToStep3Or4()">Valider</button>
-      </div>
-    </div>
+      <div id="step4" class="step">
+        <h2>Commentaire technicien</h2>
 
-    <div id="step3" class="step">
-      <h2>Application</h2>
-      <div class="row">
-        <label>Le client a-t-il téléchargé l'application et activé son compte ?</label>
-        <button class="yn" onclick="setYN('client','oui', this)">Oui</button>
-        <button class="yn" onclick="setYN('client','non', this)">Non</button>
-      </div>
-      <div class="row">
-        <label>Le technicien a-t-il installé l'application et activé le compte du client ?</label>
-        <button class="yn" onclick="setYN('tech','oui', this)">Oui</button>
-        <button class="yn" onclick="setYN('tech','non', this)">Non</button>
+        <label>Commentaire libre</label>
+        <textarea id="commentaire" style="min-height:120px;"></textarea>
+
+        <div class="actions">
+          <button class="small" type="button" onclick="goBackFromStep4()">Retour</button>
+          <button class="main" type="button" onclick="goToStep4b()">Valider</button>
+        </div>
       </div>
 
-      <div class="box">
-        Le technicien a pris le temps d’accompagner le client dans l’installation de l’application et l’activation de son compte.<br>
-        Les fonctionnalités principales ont été expliquées.<br>
-        Le client confirme être autonome.
+      <div id="step4b" class="step">
+        <h2>Évaluation</h2>
+
+        <div>
+          <label>Ponctualité</label>
+          <div id="ponctualite" class="stars"></div>
+        </div>
+
+        <div>
+          <label>Clarté des explications</label>
+          <div id="clarte" class="stars"></div>
+        </div>
+
+        <div>
+          <label>Propreté</label>
+          <div id="proprete" class="stars"></div>
+        </div>
+
+        <div>
+          <label>Satisfaction technicien</label>
+          <div id="tech" class="stars"></div>
+        </div>
+
+        <div>
+          <label>Satisfaction intervention</label>
+          <div id="inter" class="stars"></div>
+        </div>
+
+        <label>Commentaire client</label>
+        <textarea id="commentaireClient" style="min-height:140px;"></textarea>
+
+        <div class="box">
+          Ce compte rendu a pour objectif d’assurer un suivi qualité complémentaire de l’intervention réalisée.<br>
+          Il permet également de conserver une trace interne claire et durable de l’intervention, afin de pouvoir répondre rapidement à toute demande de suivi ou d’information complémentaire si nécessaire.<br>
+          Le client pourra également exprimer à nouveau son ressenti global dans les prochains jours au moyen de l’enquête de satisfaction finale qui lui sera transmise.
+        </div>
+
+        <div class="actions">
+          <button class="small" type="button" onclick="showStep(4)">Retour</button>
+          <button class="main" type="button" onclick="goToStep5()">Valider</button>
+        </div>
       </div>
 
-      <div class="actions">
-        <button class="small" type="button" onclick="showStep(2)">Retour</button>
-        <button class="main" type="button" onclick="goToStep4()">Valider</button>
-      </div>
-    </div>
+      <div id="step5" class="step">
+        <div class="box">
+          L’intervention réalisée ce jour entre exclusivement dans le cadre de la prestation prévue. Toute gratification éventuellement remise au technicien reste facultative, volontaire et indépendante de l’intervention ; elle ne constitue en aucun cas le paiement de la prestation. Le client reconnaît également que tout matériel éventuellement laissé sur place a été remis gratuitement et sans facturation complémentaire directe du technicien.
+        </div>
 
-    <div id="step4" class="step">
-      <h2>Commentaire technicien</h2>
-      <label>Commentaire libre</label>
-      <textarea id="commentaire" style="width:100%;min-height:120px;padding:12px;border-radius:12px;border:1px solid #ddd;margin-top:5px;font-size:16px;"></textarea>
+        <h2>Gratification</h2>
 
-      <div class="actions">
-        <button class="small" type="button" onclick="goBackFromStep4()">Retour</button>
-        <button class="main" type="button" onclick="goToStep4b()">Valider</button>
-      </div>
-    </div>
+        <div class="row">
+          <label>Avez-vous donné une gratification ?</label>
+          <button class="yn" type="button" onclick="setYN('tip','oui', this)">Oui</button>
+          <button class="yn" type="button" onclick="setYN('tip','non', this)">Non</button>
+        </div>
 
-    <div id="step4b" class="step">
-      <h2>Évaluation</h2>
-      <div>
-        <label>Satisfaction technicien</label>
-        <div id="tech" class="stars"></div>
-      </div>
-      <div>
-        <label>Satisfaction intervention</label>
-        <div id="inter" class="stars"></div>
-      </div>
+        <h2>Signature client</h2>
 
-      <div class="actions">
-        <button class="small" type="button" onclick="showStep(4)">Retour</button>
-        <button class="main" type="button" onclick="goToStep5()">Valider</button>
-      </div>
-    </div>
+        <label>Date complète de validation</label>
+        <input id="dateCompleteValidation" type="text" readonly />
 
-    <div id="step5" class="step">
-      <h2>Gratification</h2>
-      <div class="box">
-        Le client peut, s’il le souhaite, remettre une gratification au technicien à titre de remerciement pour la qualité de l’intervention réalisée.<br>
-        En validant ce document, le client reconnaît que cette gratification constitue un geste volontaire lié à sa satisfaction concernant l’intervention.<br>
-        Le client confirme également que tout matériel éventuellement laissé sur place a été remis gratuitement, sans facturation complémentaire.
+        <label class="checkline">
+          <input type="checkbox" id="consentementLibre" />
+          <span>Je reconnais que toute gratification éventuelle est remise librement, sans contrainte, ne correspond pas au paiement de l’intervention, et que tout matériel éventuellement laissé sur place a été remis gratuitement et sans facturation complémentaire directe du technicien.</span>
+        </label>
+
+        <label class="checkline">
+          <input type="checkbox" id="luApprouve" />
+          <span>Lu et approuvé.</span>
+        </label>
+
+        <div class="canvas-wrap">
+          <canvas id="sign"></canvas>
+        </div>
+
+        <button class="small" type="button" onclick="clearSign()">Effacer</button>
+
+        <div class="actions">
+          <button class="small" type="button" onclick="showStep(4.1)">Retour</button>
+          <button class="main" type="button" onclick="valider()">Valider / PDF</button>
+        </div>
       </div>
 
-      <div class="row">
-        <label>Avez-vous donné une gratification ?</label>
-        <button class="yn" onclick="setYN('tip','oui', this)">Oui</button>
-        <button class="yn" onclick="setYN('tip','non', this)">Non</button>
-      </div>
+      <div id="printSummary">
+        <h2>Compte rendu complet</h2>
 
-      <h2>Signature client</h2>
-      <div class="canvas-wrap">
-        <canvas id="sign"></canvas>
-      </div>
-      <button class="small" onclick="clearSign()">Effacer</button>
+        <div class="summary-card">
+          <div class="summary-title">Informations générales</div>
+          <div class="summary-line"><strong>Nom :</strong> <span id="printNom"></span></div>
+          <div class="summary-line"><strong>Prénom :</strong> <span id="printPrenom"></span></div>
+          <div class="summary-line"><strong>Adresse :</strong> <span id="printAdresse"></span></div>
+          <div class="summary-line"><strong>Intervention :</strong> <span id="printIntervention"></span></div>
+          <div class="summary-line"><strong>Date :</strong> <span id="printDate"></span></div>
+          <div class="summary-line"><strong>Heure :</strong> <span id="printHeure"></span></div>
+        </div>
 
-      <div class="actions">
-        <button class="small" type="button" onclick="showStep(4)">Retour</button>
-        <button class="main" onclick="valider()">Valider / PDF</button>
-      </div>
-    </div>
+        <div class="summary-card">
+          <div class="summary-title">Type d'intervention</div>
+          <div class="summary-line"><strong>Restart :</strong> <span id="printRestart"></span></div>
+          <div class="summary-line"><strong>Protecline :</strong> <span id="printProtecline"></span></div>
+        </div>
 
-    <div id="printSummary">
-      <h2>Compte rendu complet</h2>
+        <div class="summary-card" id="printPhotosCard">
+          <div class="summary-title">Photos de l'installation</div>
+          <div id="printPhotos" class="summary-photos"></div>
+        </div>
 
-      <div class="summary-card">
-        <div class="summary-title">Informations générales</div>
-        <div class="summary-line"><strong>Nom :</strong> <span id="printNom"></span></div>
-        <div class="summary-line"><strong>Prénom :</strong> <span id="printPrenom"></span></div>
-        <div class="summary-line"><strong>Intervention :</strong> <span id="printIntervention"></span></div>
-        <div class="summary-line"><strong>Date :</strong> <span id="printDate"></span></div>
-        <div class="summary-line"><strong>Heure :</strong> <span id="printHeure"></span></div>
-      </div>
+        <div class="summary-card" id="printApplicationCard">
+          <div class="summary-title">Application</div>
+          <div class="summary-line"><strong>Client a téléchargé et activé :</strong> <span id="printClientApp"></span></div>
+          <div class="summary-line"><strong>Technicien a installé et activé :</strong> <span id="printTechApp"></span></div>
+        </div>
 
-      <div class="summary-card">
-        <div class="summary-title">Type d'intervention</div>
-        <div class="summary-line"><strong>Restart :</strong> <span id="printRestart"></span></div>
-        <div class="summary-line"><strong>Protecline :</strong> <span id="printProtecline"></span></div>
-      </div>
+        <div class="summary-card" id="printCommentaireTechCard">
+          <div class="summary-title">Commentaire technicien</div>
+          <div class="summary-line" id="printCommentaireTech"></div>
+        </div>
 
-      <div class="summary-card" id="printPhotosCard">
-        <div class="summary-title">Photos de l'installation</div>
-        <div id="printPhotos" class="summary-photos"></div>
-      </div>
+        <div class="summary-card">
+          <div class="summary-title">Évaluation</div>
+          <div class="summary-line"><strong>Ponctualité :</strong> <span id="printPonctualite"></span></div>
+          <div class="summary-line"><strong>Clarté des explications :</strong> <span id="printClarte"></span></div>
+          <div class="summary-line"><strong>Propreté :</strong> <span id="printProprete"></span></div>
+          <div class="summary-line"><strong>Satisfaction technicien :</strong> <span id="printTechStars"></span></div>
+          <div class="summary-line"><strong>Satisfaction intervention :</strong> <span id="printInterStars"></span></div>
+          <div class="summary-line"><strong>Commentaire client :</strong> <span id="printCommentaireClient"></span></div>
+        </div>
 
-      <div class="summary-card" id="printApplicationCard">
-        <div class="summary-title">Application</div>
-        <div class="summary-line"><strong>Client a téléchargé et activé :</strong> <span id="printClientApp"></span></div>
-        <div class="summary-line"><strong>Technicien a installé et activé :</strong> <span id="printTechApp"></span></div>
-      </div>
+        <div class="summary-card">
+          <div class="summary-title">Suivi qualité</div>
+          <div class="summary-line">
+            Ce compte rendu a pour objectif d’assurer un suivi qualité complémentaire de l’intervention réalisée.
+            Il permet également de conserver une trace interne claire et durable de l’intervention, afin de pouvoir répondre rapidement à toute demande de suivi ou d’information complémentaire si nécessaire.
+            Le client pourra également exprimer à nouveau son ressenti global dans les prochains jours au moyen de l’enquête de satisfaction finale qui lui sera transmise.
+          </div>
+        </div>
 
-      <div class="summary-card">
-        <div class="summary-title">Évaluation</div>
-        <div class="summary-line"><strong>Satisfaction technicien :</strong> <span id="printTechStars"></span></div>
-        <div class="summary-line"><strong>Satisfaction intervention :</strong> <span id="printInterStars"></span></div>
-      </div>
+        <div class="summary-card">
+          <div class="summary-title">Cadre de l’intervention et gratification</div>
+          <div class="summary-line">
+            L’intervention réalisée ce jour entre exclusivement dans le cadre de la prestation prévue. Toute gratification éventuellement remise au technicien reste facultative, volontaire et indépendante de l’intervention ; elle ne constitue en aucun cas le paiement de la prestation. Le client reconnaît également que tout matériel éventuellement laissé sur place a été remis gratuitement et sans facturation complémentaire directe du technicien.
+          </div>
+          <div class="summary-line"><strong>Gratification donnée :</strong> <span id="printTip"></span></div>
+        </div>
 
-      <div class="summary-card">
-        <div class="summary-title">Gratification</div>
-        <div class="summary-line">Le client peut, s’il le souhaite, remettre une gratification au technicien à titre de remerciement pour la qualité de l’intervention réalisée.</div>
-        <div class="summary-line">En validant ce document, le client reconnaît que cette gratification constitue un geste volontaire lié à sa satisfaction concernant l’intervention.</div>
-        <div class="summary-line">Le client confirme également que tout matériel éventuellement laissé sur place a été remis gratuitement, sans facturation complémentaire.</div>
-        <div class="summary-line"><strong>Gratification donnée :</strong> <span id="printTip"></span></div>
-      </div>
+        <div class="summary-card">
+          <div class="summary-title">Validation client</div>
+          <div class="summary-line"><strong>Date complète de validation :</strong> <span id="printDateCompleteValidation"></span></div>
+          <div class="summary-line"><strong>Déclaration libre et volontaire :</strong> <span id="printConsentementLibre"></span></div>
+          <div class="summary-line"><strong>Lu et approuvé :</strong> <span id="printLuApprouve"></span></div>
+        </div>
 
-      <div class="summary-card">
-        <div class="summary-title">Signature client</div>
-        <div class="signature-print-wrap">
-          <img id="printSignature" alt="Signature" />
+        <div class="summary-card">
+          <div class="summary-title">Signature client</div>
+          <div class="signature-print-wrap">
+            <img id="printSignature" alt="Signature" />
+          </div>
         </div>
       </div>
     </div>
   </div>
 
   <script>
-    let state = { tech: 0, inter: 0, client: '', techYN: '', tip: '', signed: false, currentStep: 1, photos: [] };
+    const APP_LOGIN = 'admin';
+    const APP_PASSWORD = 'harlow';
+
+    let state = {
+      ponctualite: 0,
+      clarte: 0,
+      proprete: 0,
+      tech: 0,
+      inter: 0,
+      client: '',
+      techYN: '',
+      tip: '',
+      signed: false,
+      currentStep: 1,
+      photos: []
+    };
+
+    function loginApp() {
+      const id = document.getElementById('loginId').value.trim();
+      const password = document.getElementById('loginPassword').value;
+      const error = document.getElementById('loginError');
+
+      if (id === APP_LOGIN && password === APP_PASSWORD) {
+        sessionStorage.setItem('appLoggedIn', 'yes');
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('appShell').classList.remove('hidden-app');
+        error.classList.add('hidden');
+        setTimeout(resizeCanvas, 50);
+        return;
+      }
+
+      error.classList.remove('hidden');
+    }
+
+    function checkLogin() {
+      const logged = sessionStorage.getItem('appLoggedIn') === 'yes';
+
+      if (logged) {
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('appShell').classList.remove('hidden-app');
+      } else {
+        document.getElementById('loginScreen').style.display = 'flex';
+        document.getElementById('appShell').classList.add('hidden-app');
+      }
+    }
 
     function updateStepIndicator() {
       document.getElementById('stepIndicator').textContent = 'Étape ' + state.currentStep + ' sur 5';
     }
 
     function showStep(step) {
-      document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.step').forEach(function (el) {
+        el.classList.remove('active');
+      });
+
       document.getElementById(step === 4.1 ? 'step4b' : 'step' + step).classList.add('active');
       state.currentStep = step;
       updateStepIndicator();
+
       if (step === 5) {
+        setDateCompleteValidation();
         setTimeout(resizeCanvas, 50);
       }
     }
 
     function goToStep2() {
-      if (!nom.value || !prenom.value || !intervention.value) {
-        alert('Remplir');
+      if (!nom.value || !prenom.value || !adresse.value || !intervention.value) {
+        alert('Merci de remplir le nom, le prénom, l’adresse et l’intervention.');
         return;
       }
       showStep(2);
@@ -457,9 +795,10 @@
 
     function goToStep3Or4() {
       if (!restart.checked && !protecline.checked) {
-        alert('Type intervention');
+        alert('Merci de sélectionner un type d’intervention.');
         return;
       }
+
       if (protecline.checked) {
         showStep(3);
       } else {
@@ -469,7 +808,7 @@
 
     function goToStep4() {
       if (!state.client || !state.techYN) {
-        alert('Application');
+        alert('Merci de renseigner la partie application.');
         return;
       }
       showStep(4);
@@ -488,8 +827,8 @@
     }
 
     function goToStep5() {
-      if (!state.tech || !state.inter) {
-        alert('Notes');
+      if (!state.ponctualite || !state.clarte || !state.proprete || !state.tech || !state.inter) {
+        alert('Merci de renseigner toutes les notes.');
         return;
       }
       showStep(5);
@@ -498,21 +837,38 @@
     function stars(id, key) {
       const el = document.getElementById(id);
       el.innerHTML = '';
+
       for (let i = 1; i <= 5; i++) {
         const b = document.createElement('button');
         b.type = 'button';
         b.innerHTML = '★';
-        if (i <= state[key]) b.classList.add('active');
-        b.onclick = () => { state[key] = i; stars(id, key); };
+
+        if (i <= state[key]) {
+          b.classList.add('active');
+        }
+
+        b.onclick = function () {
+          state[key] = i;
+          stars(id, key);
+        };
+
         el.appendChild(b);
       }
     }
 
     function setYN(type, val, btn) {
-      if (type === 'client') state.client = val;
-      else if (type === 'tech') state.techYN = val;
-      else if (type === 'tip') state.tip = val;
-      btn.parentElement.querySelectorAll('.yn').forEach(b => b.classList.remove('active'));
+      if (type === 'client') {
+        state.client = val;
+      } else if (type === 'tech') {
+        state.techYN = val;
+      } else if (type === 'tip') {
+        state.tip = val;
+      }
+
+      btn.parentElement.querySelectorAll('.yn').forEach(function (b) {
+        b.classList.remove('active');
+      });
+
       btn.classList.add('active');
     }
 
@@ -577,8 +933,12 @@
     function resizeCanvas() {
       const ratio = Math.max(window.devicePixelRatio || 1, 1);
       const rect = c.getBoundingClientRect();
+
+      if (!rect.width || !rect.height) return;
+
       c.width = Math.floor(rect.width * ratio);
       c.height = Math.floor(rect.height * ratio);
+
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.scale(ratio, ratio);
       ctx.lineWidth = 2.2;
@@ -588,9 +948,25 @@
 
     function pointFromEvent(e) {
       const r = c.getBoundingClientRect();
-      if (e.touches && e.touches[0]) return { x: e.touches[0].clientX - r.left, y: e.touches[0].clientY - r.top };
-      if (e.changedTouches && e.changedTouches[0]) return { x: e.changedTouches[0].clientX - r.left, y: e.changedTouches[0].clientY - r.top };
-      return { x: e.clientX - r.left, y: e.clientY - r.top };
+
+      if (e.touches && e.touches[0]) {
+        return {
+          x: e.touches[0].clientX - r.left,
+          y: e.touches[0].clientY - r.top
+        };
+      }
+
+      if (e.changedTouches && e.changedTouches[0]) {
+        return {
+          x: e.changedTouches[0].clientX - r.left,
+          y: e.changedTouches[0].clientY - r.top
+        };
+      }
+
+      return {
+        x: e.clientX - r.left,
+        y: e.clientY - r.top
+      };
     }
 
     function startDraw(e) {
@@ -631,35 +1007,57 @@
       return s;
     }
 
+    function formatDateComplete(now) {
+      return now.toLocaleString('fr-FR', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+    }
+
+    function setDateCompleteValidation() {
+      const now = new Date();
+      document.getElementById('dateCompleteValidation').value = formatDateComplete(now);
+    }
+
     function fillPrintSummary() {
       document.getElementById('printNom').textContent = nom.value || '';
       document.getElementById('printPrenom').textContent = prenom.value || '';
+      document.getElementById('printAdresse').textContent = adresse.value || '';
       document.getElementById('printIntervention').textContent = intervention.value || '';
       document.getElementById('printDate').textContent = date.value || '';
       document.getElementById('printHeure').textContent = heure.value || '';
+
       document.getElementById('printRestart').textContent = restart.checked ? 'Oui' : 'Non';
       document.getElementById('printProtecline').textContent = protecline.checked ? 'Oui' : 'Non';
+
       document.getElementById('printClientApp').textContent = state.client || 'Non renseigné';
       document.getElementById('printTechApp').textContent = state.techYN || 'Non renseigné';
+
+      document.getElementById('printCommentaireTech').innerHTML = '<strong>Commentaire :</strong> ' + (document.getElementById('commentaire').value || '');
+
+      document.getElementById('printPonctualite').textContent = state.ponctualite ? state.ponctualite + ' / 5' : '';
+      document.getElementById('printClarte').textContent = state.clarte ? state.clarte + ' / 5' : '';
+      document.getElementById('printProprete').textContent = state.proprete ? state.proprete + ' / 5' : '';
       document.getElementById('printTechStars').textContent = state.tech ? state.tech + ' / 5' : '';
       document.getElementById('printInterStars').textContent = state.inter ? state.inter + ' / 5' : '';
-      const commentaire = document.getElementById('commentaire')?.value || '';
-      let commentaireLine = document.getElementById('printCommentaire');
-      if (!commentaireLine) {
-        const div = document.createElement('div');
-        div.className = 'summary-line';
-        div.id = 'printCommentaire';
-        document.getElementById('printApplicationCard').after(div);
-        commentaireLine = div;
-      }
-      commentaireLine.innerHTML = '<strong>Commentaire technicien :</strong> ' + commentaire;
+      document.getElementById('printCommentaireClient').textContent = document.getElementById('commentaireClient').value || '';
+
       document.getElementById('printTip').textContent = state.tip || '';
+      document.getElementById('printDateCompleteValidation').textContent = document.getElementById('dateCompleteValidation').value || '';
+      document.getElementById('printConsentementLibre').textContent = document.getElementById('consentementLibre').checked ? 'Oui' : 'Non';
+      document.getElementById('printLuApprouve').textContent = document.getElementById('luApprouve').checked ? 'Oui' : 'Non';
 
       document.getElementById('printApplicationCard').style.display = protecline.checked ? 'block' : 'none';
       document.getElementById('printPhotosCard').style.display = state.photos.length ? 'block' : 'none';
 
       const printPhotos = document.getElementById('printPhotos');
       printPhotos.innerHTML = '';
+
       state.photos.forEach(function (src) {
         const img = document.createElement('img');
         img.src = src;
@@ -670,9 +1068,27 @@
     }
 
     function valider() {
-      if (!state.tip) { alert('Gratification'); return; }
-      if (!state.signed) { alert('Signer'); return; }
+      if (!state.tip) {
+        alert('Merci de renseigner la gratification.');
+        return;
+      }
 
+      if (!document.getElementById('consentementLibre').checked) {
+        alert('Merci de cocher la déclaration de consentement libre et volontaire.');
+        return;
+      }
+
+      if (!document.getElementById('luApprouve').checked) {
+        alert('Merci de cocher la mention "Lu et approuvé".');
+        return;
+      }
+
+      if (!state.signed) {
+        alert('Merci de signer.');
+        return;
+      }
+
+      setDateCompleteValidation();
       fillPrintSummary();
 
       const oldTitle = document.title;
@@ -680,6 +1096,7 @@
       const fileNom = slugify(nom.value || 'nom');
       const filePrenom = slugify(prenom.value || 'prenom');
       const fileInter = slugify(intervention.value || 'intervention');
+
       document.title = fileDate + '_' + fileNom + '_' + filePrenom + '_' + fileInter;
 
       setTimeout(function () {
@@ -693,23 +1110,47 @@
     function init() {
       const n = new Date();
       date.value = n.toLocaleDateString('fr-FR');
-      heure.value = n.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+      heure.value = n.toLocaleTimeString('fr-FR', {
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+
+      stars('ponctualite', 'ponctualite');
+      stars('clarte', 'clarte');
+      stars('proprete', 'proprete');
       stars('tech', 'tech');
       stars('inter', 'inter');
-      resizeCanvas();
+
       updatePhotoSection(false);
       showStep(1);
+      checkLogin();
+
+      setTimeout(resizeCanvas, 50);
     }
 
     c.addEventListener('mousedown', startDraw);
     c.addEventListener('mousemove', moveDraw);
     c.addEventListener('mouseup', endDraw);
     c.addEventListener('mouseleave', endDraw);
+
     c.addEventListener('touchstart', startDraw, { passive: false });
     c.addEventListener('touchmove', moveDraw, { passive: false });
     c.addEventListener('touchend', endDraw, { passive: false });
     c.addEventListener('touchcancel', endDraw, { passive: false });
+
     window.addEventListener('resize', resizeCanvas);
+
+    document.getElementById('loginPassword').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        loginApp();
+      }
+    });
+
+    document.getElementById('loginId').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        loginApp();
+      }
+    });
 
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js');
