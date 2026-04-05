@@ -443,6 +443,26 @@
         height: 100px;
       }
     }
+
+    @media print {
+      body {
+        background: #fff;
+        padding: 0;
+      }
+
+      #loginScreen,
+      #appShell > .container > *:not(#printSummary) {
+        display: none !important;
+      }
+
+      #printSummary {
+        display: block !important;
+        width: 100%;
+        max-width: none;
+        margin: 0;
+        padding: 0;
+      }
+    }
   </style>
 </head>
 <body>
@@ -680,9 +700,9 @@
 
         <div class="actions">
           <button class="small" type="button" id="btnStep5Back">Retour</button>
-          <button class="main" type="button" id="btnGeneratePdf">Ouvrir le PDF</button>
+          <button class="main" type="button" id="btnGeneratePdf">Imprimer / Enregistrer en PDF</button>
         </div>
-        <div class="pdf-actions-note">Le document s’ouvre dans un onglet PDF, sans lancer l’impression automatiquement.</div>
+        <div class="pdf-actions-note">La fenêtre d’impression s’ouvre comme avant.</div>
       </div>
 
       <div id="printSummary">
@@ -1027,38 +1047,55 @@
       currentDictationTarget = document.getElementById(textareaId);
       currentDictationStatus = document.getElementById(statusId);
 
-      if (!currentDictationTarget || !currentDictationStatus) return;
+      if (!currentDictationTarget || !currentDictationStatus) {
+        return;
+      }
 
       recognition = new SpeechRecognition();
       recognition.lang = "fr-FR";
-      recognition.interimResults = true;
+      recognition.interimResults = false;
       recognition.continuous = true;
-
-      const initialText = currentDictationTarget.value.trim();
-      let finalTranscript = "";
+      recognition.maxAlternatives = 1;
 
       clearDictationStatuses();
       currentDictationStatus.textContent = "Écoute en cours...";
 
       recognition.onresult = function (event) {
-        let interimTranscript = "";
+        let appendedText = "";
 
         for (let i = event.resultIndex; i < event.results.length; i++) {
-          const transcript = event.results[i][0].transcript;
           if (event.results[i].isFinal) {
-            finalTranscript += transcript + " ";
-          } else {
-            interimTranscript += transcript;
+            appendedText += event.results[i][0].transcript + " ";
           }
         }
 
-        const prefix = initialText ? initialText + " " : "";
-        currentDictationTarget.value = (prefix + finalTranscript + interimTranscript).trim();
+        appendedText = appendedText.trim();
+
+        if (!appendedText) {
+          return;
+        }
+
+        const currentText = currentDictationTarget.value.trim();
+
+        if (currentText.endsWith(appendedText)) {
+          return;
+        }
+
+        currentDictationTarget.value = (currentText ? currentText + " " : "") + appendedText;
+        currentDictationTarget.value = currentDictationTarget.value.replace(/\s+/g, " ").trim();
       };
 
       recognition.onerror = function (event) {
         if (currentDictationStatus) {
-          currentDictationStatus.textContent = "Erreur dictée : " + event.error;
+          if (event.error === "no-speech") {
+            currentDictationStatus.textContent = "Aucune voix détectée.";
+          } else if (event.error === "audio-capture") {
+            currentDictationStatus.textContent = "Microphone indisponible.";
+          } else if (event.error === "not-allowed") {
+            currentDictationStatus.textContent = "Autorisation micro refusée.";
+          } else {
+            currentDictationStatus.textContent = "Erreur dictée : " + event.error;
+          }
         }
       };
 
@@ -1066,6 +1103,7 @@
         if (currentDictationStatus && currentDictationStatus.textContent === "Écoute en cours...") {
           currentDictationStatus.textContent = "Dictée arrêtée.";
         }
+        recognition = null;
       };
 
       recognition.start();
@@ -1074,7 +1112,6 @@
     function stopDictation() {
       if (recognition) {
         recognition.stop();
-        recognition = null;
       }
 
       if (currentDictationStatus && currentDictationStatus.textContent === "Écoute en cours...") {
@@ -1172,13 +1209,1417 @@
       resizeCanvasPreserve();
     }
 
-    function slugify(value) {
-      let s = String(value || "").trim();
-      s = s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-      s = s.replace(/\s+/g, "-");
-      s = s.replace(/[\\/:*?"<>|]/g, "-");
-      s = s.replace(/-+/g, "-");
-      return s || "document";
+    function formatDateComplete(now) {
+      return now.toLocaleString("fr-FR", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit"
+      });
+    }
+
+    function setDateCompleteValidation() {
+      const now = new Date();
+      dateCompleteValidationField.value = formatDateComplete(now);
+    }
+
+    function setText(id, value) {
+      document.getElementById(id).textContent = value || "";
+    }
+
+    function fillPrintSummary() {
+      setText("printNom", nomField.value);
+      setText("printPrenom", prenomField.value);
+      setText("printAdresse", adresseField.value);
+      setText("printIntervention", interventionField.value);
+      setText("printDate", dateField.value);
+      setText("printHeure", heureField.value);
+
+      setText("printRestart", restart.checked ? "Oui" : "Non");
+      setText("printProtecline", protecline.checked ? "Oui" : "Non");
+
+      setText("printClientApp", state.client || "Non renseigné");
+      setText("printTechApp", state.techYN || "Non renseigné");
+
+      setText("printCommentaireTech", commentaireField.value || "");
+      setText("printPonctualite", state.ponctualite ? state.ponctualite + " / 5" : "");
+      setText("printClarte", state.clarte ? state.clarte + " / 5" : "");
+      setText("printProprete", state.proprete ? state.proprete + " / 5" : "");
+      setText("printTechStars", state.tech ? state.tech + " / 5" : "");
+      setText("printInterStars", state.inter ? state.inter + " / 5" : "");
+      setText("printCommentaireClient", commentaireClientField.value || "");
+
+      setText("printTip", state.tip || "");
+      setText("printDateCompleteValidation", dateCompleteValidationField.value || "");
+      setText("printConsentementLibre", consentementLibre.checked ? "Oui" : "Non");
+      setText("printLuApprouve", luApprouve.checked ? "Oui" : "Non");
+
+      document.getElementById("printApplicationCard").style.display = protecline.checked ? "block" : "none";
+      document.getElementById("printPhotosCard").style.display = state.photos.length ? "block" : "none";
+
+      const printPhotos = document.getElementById("printPhotos");
+      printPhotos.innerHTML = "";
+
+      state.photos.forEach(function (src) {
+        const img = document.createElement("img");
+        img.src = src;
+        img.alt = "Photo installation";
+        printPhotos.appendChild(img);
+      });
+
+      document.getElementById("printSignature").src = state.signed ? c.toDataURL("image/png") : "";
+    }
+
+    async function printDocument() {
+      const element = document.getElementById("printSummary");
+      const previousDisplay = element.style.display;
+      element.style.display = "block";
+
+      await new Promise(function (resolve) {
+        requestAnimationFrame(function () {
+          setTimeout(resolve, 250);
+        });
+      });
+
+      window.print();
+
+      setTimeout(function () {
+        element.style.display = previousDisplay || "none";
+      }, 300);
+    }
+
+    async function valider() {
+      stopDictation();
+
+      if (!state.tip) {
+        alert("Merci de renseigner la gratification.");
+        return;
+      }
+
+      if (!consentementLibre.checked) {
+        alert("Merci de cocher la déclaration de consentement libre et volontaire.");
+        return;
+      }
+
+      if (!luApprouve.checked) {
+        alert('Merci de cocher la mention "Lu et approuvé".');
+        return;
+      }
+
+      if (!state.signed) {
+        alert("Merci de signer.");
+        return;
+      }
+
+      setDateCompleteValidation();
+      fillPrintSummary();
+
+      try {
+        await printDocument();
+      } catch (e) {
+        console.error(e);
+        alert("Erreur lors de l’ouverture de l’impression.");
+      }
+    }
+
+    function initDateTime() {
+      const now = new Date();
+      dateField.value = now.toLocaleDateString("fr-FR");
+      heureField.value = now.toLocaleTimeString("fr-FR", {
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+    }
+
+    function bindEvents() {
+      document.getElementById("loginButton").addEventListener("click", loginApp);
+
+      loginId.addEventListener("input", hideLoginError);
+      loginPassword.addEventListener("input", hideLoginError);
+
+      loginPassword.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") loginApp();
+      });
+
+      loginId.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") loginApp();
+      });
+
+      document.getElementById("btnStep1Next").addEventListener("click", goToStep2);
+      document.getElementById("btnStep2Back").addEventListener("click", function () { showStep(1); });
+      document.getElementById("btnStep2Next").addEventListener("click", goToStep3Or4);
+      document.getElementById("btnStep3Back").addEventListener("click", function () { showStep(2); });
+      document.getElementById("btnStep3Next").addEventListener("click", goToStep4);
+      document.getElementById("btnStep4Back").addEventListener("click", goBackFromStep4);
+      document.getElementById("btnStep4Next").addEventListener("click", goToStep4b);
+      document.getElementById("btnStep4bBack").addEventListener("click", function () { showStep(4); });
+      document.getElementById("btnStep4bNext").addEventListener("click", goToStep5);
+      document.getElementById("btnStep5Back").addEventListener("click", function () { showStep("4b"); });
+      document.getElementById("btnGeneratePdf").addEventListener("click", valider);
+
+      document.getElementById("btnAddPhotos").addEventListener("click", function () {
+        photoInput.click();
+      });
+
+      document.getElementById("btnClearPhotos").addEventListener("click", clearPhotos);
+      document.getElementById("btnClearSign").addEventListener("click", clearSign);
+
+      restart.addEventListener("change", updatePhotoSection);
+      protecline.addEventListener("change", updatePhotoSection);
+
+      c.addEventListener("mousedown", startDraw);
+      c.addEventListener("mousemove", moveDraw);
+      c.addEventListener("mouseup", endDraw);
+      c.addEventListener("mouseleave", endDraw);
+
+      c.addEventListener("touchstart", startDraw, { passive: false });
+      c.addEventListener("touchmove", moveDraw, { passive: false });
+      c.addEventListener("touchend", endDraw, { passive: false });
+      c.addEventListener("touchcancel", endDraw, { passive: false });
+
+      window.addEventListener("resize", resizeCanvasPreserve);
+    }
+
+    function init() {
+      initDateTime();
+
+      stars("ponctualite", "ponctualite");
+      stars("clarte", "clarte");
+      stars("proprete", "proprete");
+      stars("techStarsContainer", "tech");
+      stars("interStarsContainer", "inter");
+
+      updatePhotoSection();
+      showStep(1);
+      checkLogin();
+      bindEvents();
+
+      setTimeout(resizeCanvasPreserve, 50);
+    }
+
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", function () {
+        navigator.serviceWorker.register("sw.js").catch(function (err) {
+          console.error("Erreur SW :", err);
+        });
+      });
+    }
+
+    init();
+  </script>
+</body>
+</html><!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+  />
+  <title>Compte rendu Technicien</title>
+
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#f97316" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Compte rendu" />
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #f3f4f6;
+      padding: 12px;
+      margin: 0;
+      color: #374151;
+    }
+
+    .container,
+    .login-container {
+      max-width: 640px;
+      margin: auto;
+      background: #fff;
+      padding: 16px;
+      border-radius: 18px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    .login-wrap {
+      min-height: calc(100vh - 24px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .login-logo {
+      display: block;
+      width: 120px;
+      height: 120px;
+      margin: 0 auto 12px;
+      border-radius: 18px;
+      background: #fff7ed;
+      padding: 10px;
+    }
+
+    .login-logo-svg {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .login-logo-svg svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .login-title {
+      text-align: center;
+      color: #f97316;
+      font-size: 28px;
+      margin: 0 0 8px;
+      font-weight: bold;
+    }
+
+    .login-subtitle {
+      text-align: center;
+      color: #666;
+      font-size: 14px;
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #f97316;
+      font-size: 28px;
+      margin: 0 0 16px;
+    }
+
+    h2 {
+      text-align: center;
+      color: #555;
+      font-size: 22px;
+      margin: 18px 0 12px;
+    }
+
+    label {
+      display: block;
+      margin-top: 10px;
+      color: #666;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    input[type="text"],
+    input[type="password"],
+    textarea {
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid #ddd;
+      margin-top: 5px;
+      font-size: 16px;
+      background: #fff;
+    }
+
+    .checkline {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      margin-top: 10px;
+      color: #666;
+      font-weight: bold;
+      line-height: 1.4;
+    }
+
+    .checkline input {
+      width: auto;
+      margin: 2px 0 0 0;
+      flex-shrink: 0;
+    }
+
+    .stars {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2px;
+    }
+
+    .stars button {
+      font-size: 34px;
+      background: none;
+      border: none;
+      color: #ccc;
+      cursor: pointer;
+      padding: 0 2px;
+      line-height: 1;
+    }
+
+    .stars .active {
+      color: #f97316;
+    }
+
+    button {
+      padding: 12px 14px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 15px;
+    }
+
+    button.main {
+      width: 100%;
+      padding: 15px;
+      margin-top: 15px;
+      background: #f97316;
+      color: #fff;
+      font-size: 16px;
+      font-weight: bold;
+    }
+
+    button.small {
+      margin-top: 10px;
+      background: #e5e7eb;
+      color: #111827;
+      width: 100%;
+    }
+
+    button.yn {
+      margin-right: 8px;
+      margin-top: 8px;
+      background: #e5e7eb;
+      color: #111827;
+    }
+
+    button.yn.active {
+      background: #fed7aa;
+      color: #c2410c;
+      font-weight: bold;
+    }
+
+    .canvas-wrap {
+      border: 2px solid #f97316;
+      border-radius: 12px;
+      margin-top: 10px;
+      background: #fff;
+      overflow: hidden;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 180px;
+      touch-action: none;
+      background: #fff;
+    }
+
+    .box {
+      background: #fff7ed;
+      padding: 10px;
+      border-radius: 10px;
+      margin-top: 10px;
+      line-height: 1.5;
+      font-size: 13px;
+      text-align: left;
+    }
+
+    .row {
+      margin-top: 10px;
+    }
+
+    .step {
+      display: none;
+    }
+
+    .step.active {
+      display: block;
+    }
+
+    .photo-input {
+      width: 100%;
+      margin-top: 10px;
+      padding: 10px;
+      border: 1px dashed #f97316;
+      border-radius: 12px;
+      background: #fff7ed;
+    }
+
+    .photo-buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .photo-buttons button {
+      flex: 1;
+      margin-top: 0;
+    }
+
+    .photo-preview {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .photo-preview img {
+      width: 100%;
+      height: 140px;
+      object-fit: cover;
+      border-radius: 12px;
+      border: 1px solid #ddd;
+      background: #fff;
+    }
+
+    .step-indicator {
+      text-align: center;
+      font-size: 13px;
+      color: #777;
+      margin-bottom: 8px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .actions button {
+      flex: 1;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .error-msg {
+      margin-top: 12px;
+      background: #fef2f2;
+      color: #b91c1c;
+      border: 1px solid #fecaca;
+      border-radius: 12px;
+      padding: 10px;
+      font-size: 14px;
+      text-align: center;
+    }
+
+    #appShell.hidden-app {
+      display: none;
+    }
+
+    #printSummary {
+      display: none;
+      width: 794px;
+      max-width: 794px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 18px;
+      color: #111827;
+      font-family: Arial, sans-serif;
+    }
+
+    .summary-card {
+      border: 1px solid #d9dce1;
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin-top: 12px;
+      background: #fff;
+      text-align: left;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+
+    .summary-title {
+      font-weight: bold;
+      color: #f97316;
+      margin-bottom: 10px;
+      font-size: 18px;
+      text-align: left;
+    }
+
+    .summary-line {
+      margin-top: 6px;
+      font-size: 14px;
+      line-height: 1.55;
+      word-break: break-word;
+      white-space: normal;
+      text-align: left;
+    }
+
+    .summary-photos {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .summary-photos img {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+      background: #fff;
+    }
+
+    .signature-print-wrap {
+      margin-top: 10px;
+      border: 2px solid #f97316;
+      border-radius: 12px;
+      background: #fff;
+      min-height: 180px;
+      overflow: hidden;
+    }
+
+    .signature-print-wrap img {
+      width: 100%;
+      height: 180px;
+      object-fit: contain;
+      display: block;
+      background: #fff;
+    }
+
+    .pdf-actions-note {
+      font-size: 12px;
+      color: #777;
+      margin-top: 8px;
+      text-align: center;
+    }
+
+    .dictation-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .dictation-actions button {
+      flex: 1;
+      margin-top: 0;
+    }
+
+    .dictation-status {
+      margin-top: 6px;
+      font-size: 12px;
+      color: #6b7280;
+      min-height: 16px;
+      text-align: left;
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 8px;
+      }
+
+      .container,
+      .login-container {
+        padding: 14px;
+        border-radius: 14px;
+      }
+
+      h1,
+      .login-title {
+        font-size: 24px;
+      }
+
+      h2 {
+        font-size: 20px;
+      }
+
+      .stars button {
+        font-size: 30px;
+      }
+
+      canvas {
+        height: 160px;
+      }
+
+      button.yn {
+        width: calc(50% - 6px);
+        margin-right: 0;
+      }
+
+      .actions,
+      .photo-buttons,
+      .dictation-actions {
+        flex-direction: column;
+      }
+
+      .login-logo {
+        width: 100px;
+        height: 100px;
+      }
+    }
+
+    @media print {
+      body {
+        background: #fff;
+        padding: 0;
+      }
+
+      #loginScreen,
+      #appShell > .container > *:not(#printSummary) {
+        display: none !important;
+      }
+
+      #printSummary {
+        display: block !important;
+        width: 100%;
+        max-width: none;
+        margin: 0;
+        padding: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="loginScreen" class="login-wrap">
+    <div class="login-container">
+      <div class="login-logo login-logo-svg" aria-label="Logo">
+        <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Logo Compte rendu">
+          <rect x="6" y="6" width="108" height="108" rx="22" fill="#fff7ed" stroke="#f97316" stroke-width="6"/>
+          <circle cx="60" cy="36" r="12" fill="#f97316"/>
+          <path d="M34 78c4-14 16-22 26-22s22 8 26 22" fill="none" stroke="#f97316" stroke-width="8" stroke-linecap="round"/>
+          <path d="M42 94h36" stroke="#ea580c" stroke-width="8" stroke-linecap="round"/>
+        </svg>
+      </div>
+
+      <div class="login-title">Compte rendu</div>
+      <div class="login-subtitle">Connexion sécurisée</div>
+
+      <label for="loginId">Identifiant</label>
+      <input id="loginId" type="text" autocomplete="username" />
+
+      <label for="loginPassword">Mot de passe</label>
+      <input id="loginPassword" type="password" autocomplete="current-password" />
+
+      <button class="main" type="button" id="loginButton">Se connecter</button>
+
+      <div id="loginError" class="error-msg hidden">
+        Identifiant ou mot de passe incorrect.
+      </div>
+    </div>
+  </div>
+
+  <div id="appShell" class="hidden-app">
+    <div class="container">
+      <h1>Compte rendu</h1>
+      <div id="stepIndicator" class="step-indicator">Étape 1 sur 5</div>
+
+      <div id="step1" class="step active">
+        <label for="nom">Nom</label>
+        <input id="nom" type="text" />
+
+        <label for="prenom">Prénom</label>
+        <input id="prenom" type="text" />
+
+        <label for="adresse">Adresse</label>
+        <input id="adresse" type="text" />
+
+        <label for="intervention">Intervention</label>
+        <input id="intervention" type="text" />
+
+        <label for="date">Date</label>
+        <input id="date" type="text" readonly />
+
+        <label for="heure">Heure</label>
+        <input id="heure" type="text" readonly />
+
+        <div class="actions">
+          <button class="main" type="button" id="btnStep1Next">Valider</button>
+        </div>
+      </div>
+
+      <div id="step2" class="step">
+        <h2>Type intervention</h2>
+
+        <label class="checkline">
+          <input type="checkbox" id="restart" />
+          <span>Restart</span>
+        </label>
+
+        <label class="checkline">
+          <input type="checkbox" id="protecline" />
+          <span>Protecline</span>
+        </label>
+
+        <div id="photoSection">
+          <h2>Photos de l'installation</h2>
+          <div class="box">
+            Vous pouvez prendre des clichés de l'installation pour conserver une preuve visuelle de l'intervention.
+          </div>
+
+          <input id="photoInput" class="photo-input hidden" type="file" accept="image/*" capture="environment" multiple />
+
+          <div class="photo-buttons">
+            <button class="small" type="button" id="btnAddPhotos">Prendre / ajouter des photos</button>
+            <button class="small" type="button" id="btnClearPhotos">Effacer les photos</button>
+          </div>
+
+          <div id="photoPreview" class="photo-preview"></div>
+        </div>
+
+        <div class="actions">
+          <button class="small" type="button" id="btnStep2Back">Retour</button>
+          <button class="main" type="button" id="btnStep2Next">Valider</button>
+        </div>
+      </div>
+
+      <div id="step3" class="step">
+        <h2>Application</h2>
+
+        <div class="row">
+          <label>Le client a-t-il téléchargé l'application et activé son compte ?</label>
+          <button class="yn" type="button" onclick="setYN('client','oui', this)">Oui</button>
+          <button class="yn" type="button" onclick="setYN('client','non', this)">Non</button>
+        </div>
+
+        <div class="row">
+          <label>Le technicien a-t-il installé l'application et activé le compte du client ?</label>
+          <button class="yn" type="button" onclick="setYN('tech','oui', this)">Oui</button>
+          <button class="yn" type="button" onclick="setYN('tech','non', this)">Non</button>
+        </div>
+
+        <div class="box">
+          Le technicien a pris le temps d’accompagner le client dans l’installation de l’application et l’activation de son compte.<br>
+          Les fonctionnalités principales ont été expliquées.<br>
+          Le client confirme être autonome.
+        </div>
+
+        <div class="actions">
+          <button class="small" type="button" id="btnStep3Back">Retour</button>
+          <button class="main" type="button" id="btnStep3Next">Valider</button>
+        </div>
+      </div>
+
+      <div id="step4" class="step">
+        <h2>Commentaire technicien</h2>
+
+        <label for="commentaire">Commentaire libre</label>
+        <textarea
+          id="commentaire"
+          style="min-height:120px;"
+          spellcheck="true"
+          autocapitalize="sentences"
+          autocomplete="on"
+        ></textarea>
+
+        <div class="dictation-actions">
+          <button class="small" type="button" onclick="startDictation('commentaire', 'statusCommentaire')">🎤 Dicter</button>
+          <button class="small" type="button" onclick="stopDictation()">⏹ Arrêter</button>
+        </div>
+        <div id="statusCommentaire" class="dictation-status"></div>
+
+        <div class="actions">
+          <button class="small" type="button" id="btnStep4Back">Retour</button>
+          <button class="main" type="button" id="btnStep4Next">Valider</button>
+        </div>
+      </div>
+
+      <div id="step4b" class="step">
+        <h2>Évaluation</h2>
+
+        <div>
+          <label>Ponctualité</label>
+          <div id="ponctualite" class="stars"></div>
+        </div>
+
+        <div>
+          <label>Clarté des explications</label>
+          <div id="clarte" class="stars"></div>
+        </div>
+
+        <div>
+          <label>Propreté</label>
+          <div id="proprete" class="stars"></div>
+        </div>
+
+        <div>
+          <label>Satisfaction technicien</label>
+          <div id="techStarsContainer" class="stars"></div>
+        </div>
+
+        <div>
+          <label>Satisfaction intervention</label>
+          <div id="interStarsContainer" class="stars"></div>
+        </div>
+
+        <label for="commentaireClient">Commentaire client</label>
+        <textarea
+          id="commentaireClient"
+          style="min-height:140px;"
+          spellcheck="true"
+          autocapitalize="sentences"
+          autocomplete="on"
+        ></textarea>
+
+        <div class="dictation-actions">
+          <button class="small" type="button" onclick="startDictation('commentaireClient', 'statusCommentaireClient')">🎤 Dicter</button>
+          <button class="small" type="button" onclick="stopDictation()">⏹ Arrêter</button>
+        </div>
+        <div id="statusCommentaireClient" class="dictation-status"></div>
+
+        <div class="box">
+          Ce compte rendu a pour objectif d’assurer un suivi qualité complémentaire de l’intervention réalisée.<br>
+          Il permet également de conserver une trace interne claire et durable de l’intervention, afin de pouvoir répondre rapidement à toute demande de suivi ou d’information complémentaire si nécessaire.<br>
+          Le client pourra également exprimer à nouveau son ressenti global dans les prochains jours au moyen de l’enquête de satisfaction finale qui lui sera transmise.
+        </div>
+
+        <div class="actions">
+          <button class="small" type="button" id="btnStep4bBack">Retour</button>
+          <button class="main" type="button" id="btnStep4bNext">Valider</button>
+        </div>
+      </div>
+
+      <div id="step5" class="step">
+        <div class="box">
+          L’intervention réalisée ce jour entre exclusivement dans le cadre de la prestation prévue. Toute gratification éventuellement remise au technicien reste facultative, volontaire et indépendante de l’intervention ; elle ne constitue en aucun cas le paiement de la prestation. Le client reconnaît également que tout matériel éventuellement laissé sur place a été remis gratuitement et sans facturation complémentaire directe du technicien.
+        </div>
+
+        <h2>Gratification</h2>
+
+        <div class="row">
+          <label>Avez-vous donné une gratification ?</label>
+          <button class="yn" type="button" onclick="setYN('tip','oui', this)">Oui</button>
+          <button class="yn" type="button" onclick="setYN('tip','non', this)">Non</button>
+        </div>
+
+        <h2>Signature client</h2>
+
+        <label for="dateCompleteValidation">Date complète de validation</label>
+        <input id="dateCompleteValidation" type="text" readonly />
+
+        <label class="checkline">
+          <input type="checkbox" id="consentementLibre" />
+          <span>Je reconnais que toute gratification éventuelle est remise librement, sans contrainte, ne correspond pas au paiement de l’intervention, et que tout matériel éventuellement laissé sur place a été remis gratuitement et sans facturation complémentaire directe du technicien.</span>
+        </label>
+
+        <label class="checkline">
+          <input type="checkbox" id="luApprouve" />
+          <span>Lu et approuvé.</span>
+        </label>
+
+        <div class="canvas-wrap">
+          <canvas id="sign"></canvas>
+        </div>
+
+        <button class="small" type="button" id="btnClearSign">Effacer</button>
+
+        <div class="actions">
+          <button class="small" type="button" id="btnStep5Back">Retour</button>
+          <button class="main" type="button" id="btnGeneratePdf">Imprimer / Enregistrer en PDF</button>
+        </div>
+        <div class="pdf-actions-note">La fenêtre d’impression s’ouvre comme avant.</div>
+      </div>
+
+      <div id="printSummary">
+        <h2>Compte rendu complet</h2>
+
+        <div class="summary-card">
+          <div class="summary-title">Informations générales</div>
+          <div class="summary-line"><strong>Nom :</strong> <span id="printNom"></span></div>
+          <div class="summary-line"><strong>Prénom :</strong> <span id="printPrenom"></span></div>
+          <div class="summary-line"><strong>Adresse :</strong> <span id="printAdresse"></span></div>
+          <div class="summary-line"><strong>Intervention :</strong> <span id="printIntervention"></span></div>
+          <div class="summary-line"><strong>Date :</strong> <span id="printDate"></span></div>
+          <div class="summary-line"><strong>Heure :</strong> <span id="printHeure"></span></div>
+        </div>
+
+        <div class="summary-card">
+          <div class="summary-title">Type d'intervention</div>
+          <div class="summary-line"><strong>Restart :</strong> <span id="printRestart"></span></div>
+          <div class="summary-line"><strong>Protecline :</strong> <span id="printProtecline"></span></div>
+        </div>
+
+        <div class="summary-card" id="printPhotosCard">
+          <div class="summary-title">Photos de l'installation</div>
+          <div id="printPhotos" class="summary-photos"></div>
+        </div>
+
+        <div class="summary-card" id="printApplicationCard">
+          <div class="summary-title">Application</div>
+          <div class="summary-line"><strong>Client a téléchargé et activé :</strong> <span id="printClientApp"></span></div>
+          <div class="summary-line"><strong>Technicien a installé et activé :</strong> <span id="printTechApp"></span></div>
+        </div>
+
+        <div class="summary-card" id="printCommentaireTechCard">
+          <div class="summary-title">Commentaire technicien</div>
+          <div class="summary-line"><strong>Commentaire :</strong> <span id="printCommentaireTech"></span></div>
+        </div>
+
+        <div class="summary-card">
+          <div class="summary-title">Évaluation</div>
+          <div class="summary-line"><strong>Ponctualité :</strong> <span id="printPonctualite"></span></div>
+          <div class="summary-line"><strong>Clarté des explications :</strong> <span id="printClarte"></span></div>
+          <div class="summary-line"><strong>Propreté :</strong> <span id="printProprete"></span></div>
+          <div class="summary-line"><strong>Satisfaction technicien :</strong> <span id="printTechStars"></span></div>
+          <div class="summary-line"><strong>Satisfaction intervention :</strong> <span id="printInterStars"></span></div>
+          <div class="summary-line"><strong>Commentaire client :</strong> <span id="printCommentaireClient"></span></div>
+        </div>
+
+        <div class="summary-card">
+          <div class="summary-title">Suivi qualité</div>
+          <div class="summary-line">Ce compte rendu a pour objectif d’assurer un suivi qualité complémentaire de l’intervention réalisée. Il permet également de conserver une trace interne claire et durable de l’intervention, afin de pouvoir répondre rapidement à toute demande de suivi ou d’information complémentaire si nécessaire. Le client pourra également exprimer à nouveau son ressenti global dans les prochains jours au moyen de l’enquête de satisfaction finale qui lui sera transmise.</div>
+        </div>
+
+        <div class="summary-card">
+          <div class="summary-title">Cadre de l’intervention et gratification</div>
+          <div class="summary-line">L’intervention réalisée ce jour entre exclusivement dans le cadre de la prestation prévue. Toute gratification éventuellement remise au technicien reste facultative, volontaire et indépendante de l’intervention ; elle ne constitue en aucun cas le paiement de la prestation. Le client reconnaît également que tout matériel éventuellement laissé sur place a été remis gratuitement et sans facturation complémentaire directe du technicien.</div>
+          <div class="summary-line"><strong>Gratification donnée :</strong> <span id="printTip"></span></div>
+        </div>
+
+        <div class="summary-card">
+          <div class="summary-title">Validation client</div>
+          <div class="summary-line"><strong>Date complète de validation :</strong> <span id="printDateCompleteValidation"></span></div>
+          <div class="summary-line"><strong>Déclaration libre et volontaire :</strong> <span id="printConsentementLibre"></span></div>
+          <div class="summary-line"><strong>Lu et approuvé :</strong> <span id="printLuApprouve"></span></div>
+        </div>
+
+        <div class="summary-card">
+          <div class="summary-title">Signature client</div>
+          <div class="signature-print-wrap">
+            <img id="printSignature" alt="Signature" />
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const APP_LOGIN = "admin";
+    const APP_PASSWORD = "harlow";
+
+    const state = {
+      ponctualite: 0,
+      clarte: 0,
+      proprete: 0,
+      tech: 0,
+      inter: 0,
+      client: "",
+      techYN: "",
+      tip: "",
+      signed: false,
+      currentStep: 1,
+      photos: []
+    };
+
+    let recognition = null;
+    let currentDictationTarget = null;
+    let currentDictationStatus = null;
+
+    const loginScreen = document.getElementById("loginScreen");
+    const appShell = document.getElementById("appShell");
+    const loginId = document.getElementById("loginId");
+    const loginPassword = document.getElementById("loginPassword");
+    const loginError = document.getElementById("loginError");
+
+    const stepIndicator = document.getElementById("stepIndicator");
+
+    const nomField = document.getElementById("nom");
+    const prenomField = document.getElementById("prenom");
+    const adresseField = document.getElementById("adresse");
+    const interventionField = document.getElementById("intervention");
+    const dateField = document.getElementById("date");
+    const heureField = document.getElementById("heure");
+
+    const restart = document.getElementById("restart");
+    const protecline = document.getElementById("protecline");
+    const photoSection = document.getElementById("photoSection");
+    const photoInput = document.getElementById("photoInput");
+    const photoPreview = document.getElementById("photoPreview");
+
+    const commentaireField = document.getElementById("commentaire");
+    const commentaireClientField = document.getElementById("commentaireClient");
+    const dateCompleteValidationField = document.getElementById("dateCompleteValidation");
+    const consentementLibre = document.getElementById("consentementLibre");
+    const luApprouve = document.getElementById("luApprouve");
+
+    const c = document.getElementById("sign");
+    const ctx = c.getContext("2d");
+
+    let isDrawing = false;
+
+    function hideLoginError() {
+      loginError.classList.add("hidden");
+    }
+
+    function loginApp() {
+      const id = loginId.value.trim();
+      const password = loginPassword.value;
+
+      if (id === APP_LOGIN && password === APP_PASSWORD) {
+        sessionStorage.setItem("appLoggedIn", "yes");
+        loginScreen.style.display = "none";
+        appShell.classList.remove("hidden-app");
+        hideLoginError();
+        setTimeout(resizeCanvasPreserve, 50);
+        return;
+      }
+
+      loginError.classList.remove("hidden");
+    }
+
+    function checkLogin() {
+      const logged = sessionStorage.getItem("appLoggedIn") === "yes";
+
+      if (logged) {
+        loginScreen.style.display = "none";
+        appShell.classList.remove("hidden-app");
+      } else {
+        loginScreen.style.display = "flex";
+        appShell.classList.add("hidden-app");
+      }
+    }
+
+    function getDisplayedStepNumber(step) {
+      if (step === "4b") return 4;
+      return Number(step);
+    }
+
+    function updateStepIndicator() {
+      stepIndicator.textContent = "Étape " + getDisplayedStepNumber(state.currentStep) + " sur 5";
+    }
+
+    function showStep(step) {
+      document.querySelectorAll(".step").forEach(function (el) {
+        el.classList.remove("active");
+      });
+
+      const map = {
+        1: "step1",
+        2: "step2",
+        3: "step3",
+        4: "step4",
+        "4b": "step4b",
+        5: "step5"
+      };
+
+      document.getElementById(map[step]).classList.add("active");
+      state.currentStep = step;
+      updateStepIndicator();
+
+      if (step === 5) {
+        setDateCompleteValidation();
+        setTimeout(resizeCanvasPreserve, 50);
+      }
+    }
+
+    function goToStep2() {
+      if (!nomField.value.trim() || !prenomField.value.trim() || !adresseField.value.trim() || !interventionField.value.trim()) {
+        alert("Merci de remplir le nom, le prénom, l’adresse et l’intervention.");
+        return;
+      }
+      showStep(2);
+    }
+
+    function goToStep3Or4() {
+      if (!restart.checked && !protecline.checked) {
+        alert("Merci de sélectionner un type d’intervention.");
+        return;
+      }
+
+      if (protecline.checked) {
+        showStep(3);
+      } else {
+        showStep(4);
+      }
+    }
+
+    function goToStep4() {
+      if (!state.client || !state.techYN) {
+        alert("Merci de renseigner la partie application.");
+        return;
+      }
+      showStep(4);
+    }
+
+    function goBackFromStep4() {
+      if (protecline.checked) {
+        showStep(3);
+      } else {
+        showStep(2);
+      }
+    }
+
+    function goToStep4b() {
+      showStep("4b");
+    }
+
+    function goToStep5() {
+      if (!state.ponctualite || !state.clarte || !state.proprete || !state.tech || !state.inter) {
+        alert("Merci de renseigner toutes les notes.");
+        return;
+      }
+      showStep(5);
+    }
+
+    function stars(id, key) {
+      const el = document.getElementById(id);
+      el.innerHTML = "";
+
+      for (let i = 1; i <= 5; i++) {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.textContent = "★";
+
+        if (i <= state[key]) {
+          b.classList.add("active");
+        }
+
+        b.addEventListener("click", function () {
+          state[key] = i;
+          stars(id, key);
+        });
+
+        el.appendChild(b);
+      }
+    }
+
+    function setYN(type, val, btn) {
+      if (type === "client") {
+        state.client = val;
+      } else if (type === "tech") {
+        state.techYN = val;
+      } else if (type === "tip") {
+        state.tip = val;
+      }
+
+      btn.parentElement.querySelectorAll(".yn").forEach(function (b) {
+        b.classList.remove("active");
+      });
+
+      btn.classList.add("active");
+    }
+
+    window.setYN = setYN;
+
+    function renderPhotoPreview() {
+      photoPreview.innerHTML = "";
+
+      state.photos.forEach(function (src) {
+        const img = document.createElement("img");
+        img.src = src;
+        img.alt = "Photo intervention";
+        photoPreview.appendChild(img);
+      });
+    }
+
+    function clearPhotos() {
+      state.photos = [];
+      photoInput.value = "";
+      renderPhotoPreview();
+    }
+
+    function updatePhotoSection() {
+      const interventionChecked = restart.checked || protecline.checked;
+      photoSection.style.display = interventionChecked ? "block" : "none";
+
+      if (!interventionChecked) {
+        clearPhotos();
+      }
+    }
+
+    photoInput.addEventListener("change", function () {
+      const files = Array.from(photoInput.files || []);
+
+      files.forEach(function (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          state.photos.push(e.target.result);
+          renderPhotoPreview();
+        };
+        reader.readAsDataURL(file);
+      });
+
+      photoInput.value = "";
+    });
+
+    function clearDictationStatuses() {
+      ["statusCommentaire", "statusCommentaireClient"].forEach(function (id) {
+        const el = document.getElementById(id);
+        if (el) el.textContent = "";
+      });
+    }
+
+    function startDictation(textareaId, statusId) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+      if (!SpeechRecognition) {
+        alert("La dictée vocale n’est pas prise en charge sur cet appareil ou ce navigateur.");
+        return;
+      }
+
+      stopDictation();
+
+      currentDictationTarget = document.getElementById(textareaId);
+      currentDictationStatus = document.getElementById(statusId);
+
+      if (!currentDictationTarget || !currentDictationStatus) {
+        return;
+      }
+
+      recognition = new SpeechRecognition();
+      recognition.lang = "fr-FR";
+      recognition.interimResults = false;
+      recognition.continuous = true;
+      recognition.maxAlternatives = 1;
+
+      clearDictationStatuses();
+      currentDictationStatus.textContent = "Écoute en cours...";
+
+      recognition.onresult = function (event) {
+        let appendedText = "";
+
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          if (event.results[i].isFinal) {
+            appendedText += event.results[i][0].transcript + " ";
+          }
+        }
+
+        appendedText = appendedText.trim();
+
+        if (!appendedText) {
+          return;
+        }
+
+        const currentText = currentDictationTarget.value.trim();
+
+        if (currentText.endsWith(appendedText)) {
+          return;
+        }
+
+        currentDictationTarget.value = (currentText ? currentText + " " : "") + appendedText;
+        currentDictationTarget.value = currentDictationTarget.value.replace(/\s+/g, " ").trim();
+      };
+
+      recognition.onerror = function (event) {
+        if (currentDictationStatus) {
+          if (event.error === "no-speech") {
+            currentDictationStatus.textContent = "Aucune voix détectée.";
+          } else if (event.error === "audio-capture") {
+            currentDictationStatus.textContent = "Microphone indisponible.";
+          } else if (event.error === "not-allowed") {
+            currentDictationStatus.textContent = "Autorisation micro refusée.";
+          } else {
+            currentDictationStatus.textContent = "Erreur dictée : " + event.error;
+          }
+        }
+      };
+
+      recognition.onend = function () {
+        if (currentDictationStatus && currentDictationStatus.textContent === "Écoute en cours...") {
+          currentDictationStatus.textContent = "Dictée arrêtée.";
+        }
+        recognition = null;
+      };
+
+      recognition.start();
+    }
+
+    function stopDictation() {
+      if (recognition) {
+        recognition.stop();
+      }
+
+      if (currentDictationStatus && currentDictationStatus.textContent === "Écoute en cours...") {
+        currentDictationStatus.textContent = "Dictée arrêtée.";
+      }
+    }
+
+    window.startDictation = startDictation;
+    window.stopDictation = stopDictation;
+
+    function setupCanvasStyle() {
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      const ratio = Math.max(window.devicePixelRatio || 1, 1);
+      ctx.scale(ratio, ratio);
+      ctx.lineWidth = 2.2;
+      ctx.lineCap = "round";
+      ctx.strokeStyle = "#111827";
+    }
+
+    function resizeCanvasPreserve() {
+      const rect = c.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+
+      let previousImage = null;
+      if (c.width > 0 && c.height > 0 && state.signed) {
+        previousImage = c.toDataURL("image/png");
+      }
+
+      const ratio = Math.max(window.devicePixelRatio || 1, 1);
+      c.width = Math.floor(rect.width * ratio);
+      c.height = Math.floor(rect.height * ratio);
+
+      setupCanvasStyle();
+
+      if (previousImage) {
+        const img = new Image();
+        img.onload = function () {
+          ctx.drawImage(img, 0, 0, rect.width, rect.height);
+        };
+        img.src = previousImage;
+      }
+    }
+
+    function pointFromEvent(e) {
+      const r = c.getBoundingClientRect();
+
+      if (e.touches && e.touches[0]) {
+        return {
+          x: e.touches[0].clientX - r.left,
+          y: e.touches[0].clientY - r.top
+        };
+      }
+
+      if (e.changedTouches && e.changedTouches[0]) {
+        return {
+          x: e.changedTouches[0].clientX - r.left,
+          y: e.changedTouches[0].clientY - r.top
+        };
+      }
+
+      return {
+        x: e.clientX - r.left,
+        y: e.clientY - r.top
+      };
+    }
+
+    function startDraw(e) {
+      isDrawing = true;
+      const p = pointFromEvent(e);
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y);
+      if (e.preventDefault) e.preventDefault();
+    }
+
+    function moveDraw(e) {
+      if (!isDrawing) return;
+      const p = pointFromEvent(e);
+      ctx.lineTo(p.x, p.y);
+      ctx.stroke();
+      state.signed = true;
+      if (e.preventDefault) e.preventDefault();
+    }
+
+    function endDraw(e) {
+      if (!isDrawing) return;
+      isDrawing = false;
+      ctx.beginPath();
+      if (e && e.preventDefault) e.preventDefault();
+    }
+
+    function clearSign() {
+      const rect = c.getBoundingClientRect();
+      ctx.clearRect(0, 0, rect.width, rect.height);
+      state.signed = false;
+      resizeCanvasPreserve();
     }
 
     function formatDateComplete(now) {
@@ -1245,79 +2686,22 @@
       document.getElementById("printSignature").src = state.signed ? c.toDataURL("image/png") : "";
     }
 
-    async function generatePdf() {
-      const { jsPDF } = window.jspdf;
+    async function printDocument() {
       const element = document.getElementById("printSummary");
-
       const previousDisplay = element.style.display;
       element.style.display = "block";
 
       await new Promise(function (resolve) {
         requestAnimationFrame(function () {
-          setTimeout(resolve, 150);
+          setTimeout(resolve, 250);
         });
       });
 
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: "#ffffff",
-        scrollX: 0,
-        scrollY: 0
-      });
-
-      element.style.display = previousDisplay || "none";
-
-      const imgData = canvas.toDataURL("image/jpeg", 0.98);
-      const pdf = new jsPDF("p", "mm", "a4");
-
-      const pdfWidth = 210;
-      const pdfHeight = 297;
-      const margin = 8;
-      const usableWidth = pdfWidth - (margin * 2);
-
-      const imgWidth = usableWidth;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-      let heightLeft = imgHeight;
-      let position = margin;
-
-      pdf.addImage(imgData, "JPEG", margin, position, imgWidth, imgHeight);
-      heightLeft -= (pdfHeight - margin * 2);
-
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight + margin;
-        pdf.addPage();
-        pdf.addImage(imgData, "JPEG", margin, position, imgWidth, imgHeight);
-        heightLeft -= (pdfHeight - margin * 2);
-      }
-
-      const fileDate = slugify(dateField.value || "date");
-      const fileNom = slugify(nomField.value || "nom");
-      const filePrenom = slugify(prenomField.value || "prenom");
-      const fileInter = slugify(interventionField.value || "intervention");
-      const fileName = fileDate + "_" + fileNom + "_" + filePrenom + "_" + fileInter + ".pdf";
-
-      pdf.setProperties({
-        title: fileName
-      });
-
-      const blob = pdf.output("blob");
-      const blobUrl = URL.createObjectURL(blob);
-      const newWindow = window.open(blobUrl, "_blank");
-
-      if (!newWindow) {
-        const a = document.createElement("a");
-        a.href = blobUrl;
-        a.download = fileName;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-      }
+      window.print();
 
       setTimeout(function () {
-        URL.revokeObjectURL(blobUrl);
-      }, 60000);
+        element.style.display = previousDisplay || "none";
+      }, 300);
     }
 
     async function valider() {
@@ -1347,10 +2731,10 @@
       fillPrintSummary();
 
       try {
-        await generatePdf();
+        await printDocument();
       } catch (e) {
         console.error(e);
-        alert("Erreur lors de la génération du PDF.");
+        alert("Erreur lors de l’ouverture de l’impression.");
       }
     }
 
