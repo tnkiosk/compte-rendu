@@ -1,4 +1,4 @@
-const CACHE_NAME = "compte-rendu-v9";
+const CACHE_NAME = "compte-rendu-v10";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -29,13 +29,8 @@ self.addEventListener("fetch", (event) => {
   const request = event.request;
   const url = new URL(request.url);
 
-  if (request.method !== "GET") {
-    return;
-  }
-
-  if (url.origin !== self.location.origin) {
-    return;
-  }
+  if (request.method !== "GET") return;
+  if (url.origin !== self.location.origin) return;
 
   if (request.mode === "navigate") {
     event.respondWith(
@@ -52,9 +47,7 @@ self.addEventListener("fetch", (event) => {
 
   event.respondWith(
     caches.match(request).then((cached) => {
-      if (cached) {
-        return cached;
-      }
+      if (cached) return cached;
 
       return fetch(request).then((response) => {
         if (!response || response.status !== 200 || response.type !== "basic") {
