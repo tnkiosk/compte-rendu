@@ -204,8 +204,9 @@
       padding: 10px;
       border-radius: 10px;
       margin-top: 10px;
-      line-height: 1.4;
+      line-height: 1.5;
       font-size: 13px;
+      text-align: left;
     }
 
     .row {
@@ -297,26 +298,30 @@
     }
 
     .summary-card {
-      border: 1px solid #e5e7eb;
+      border: 1px solid #d9dce1;
       border-radius: 12px;
-      padding: 12px;
+      padding: 12px 14px;
       margin-top: 12px;
       background: #fff;
       page-break-inside: avoid;
+      text-align: left;
     }
 
     .summary-title {
       font-weight: bold;
       color: #f97316;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
+      font-size: 18px;
+      text-align: left;
     }
 
     .summary-line {
       margin-top: 6px;
       font-size: 14px;
-      line-height: 1.4;
+      line-height: 1.55;
       word-break: break-word;
       white-space: pre-wrap;
+      text-align: left;
     }
 
     .summary-photos {
@@ -352,9 +357,22 @@
     }
 
     @media print {
+      @page {
+        size: A4;
+        margin: 10mm;
+      }
+
+      html, body {
+        width: 100%;
+      }
+
       body {
         background: #fff;
         padding: 0;
+        margin: 0;
+        color: #111827;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
       }
 
       #loginScreen {
@@ -365,6 +383,9 @@
         box-shadow: none;
         border-radius: 0;
         max-width: 100%;
+        width: 100%;
+        padding: 0;
+        margin: 0;
       }
 
       #stepIndicator,
@@ -377,6 +398,60 @@
 
       #printSummary {
         display: block !important;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+      }
+
+      #printSummary h2 {
+        text-align: left;
+        font-size: 22px;
+        margin: 0 0 12px;
+        color: #111827;
+      }
+
+      .summary-card {
+        width: 100%;
+        margin-top: 10px;
+        margin-left: 0;
+        margin-right: 0;
+        padding: 10px 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 10px;
+        background: #fff;
+        box-shadow: none;
+        text-align: left;
+      }
+
+      .summary-title {
+        text-align: left;
+        margin: 0 0 8px;
+        font-size: 16px;
+        line-height: 1.3;
+      }
+
+      .summary-line {
+        text-align: left;
+        margin-top: 5px;
+        line-height: 1.45;
+        font-size: 13px;
+      }
+
+      .summary-photos {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .summary-photos img {
+        height: 150px;
+      }
+
+      .signature-print-wrap {
+        min-height: 150px;
+      }
+
+      .signature-print-wrap img {
+        height: 150px;
       }
     }
 
@@ -1038,7 +1113,8 @@
       document.getElementById('printClientApp').textContent = state.client || 'Non renseigné';
       document.getElementById('printTechApp').textContent = state.techYN || 'Non renseigné';
 
-      document.getElementById('printCommentaireTech').innerHTML = '<strong>Commentaire :</strong> ' + (document.getElementById('commentaire').value || '');
+      document.getElementById('printCommentaireTech').innerHTML =
+        '<strong>Commentaire :</strong> ' + (document.getElementById('commentaire').value || '');
 
       document.getElementById('printPonctualite').textContent = state.ponctualite ? state.ponctualite + ' / 5' : '';
       document.getElementById('printClarte').textContent = state.clarte ? state.clarte + ' / 5' : '';
