@@ -4,13 +4,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Compte rendu Technicien</title>
-
   <link rel="manifest" href="manifest.webmanifest" />
   <meta name="theme-color" content="#f97316" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Compte rendu" />
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
   <style>
     * { box-sizing: border-box; }
@@ -292,7 +294,7 @@
     }
 
     #appShell.hidden-app {
-      display: none !important;
+      display: none;
     }
 
     #printSummary {
@@ -437,26 +439,6 @@
         height: 100px;
       }
     }
-
-    @media print {
-      body {
-        background: #fff;
-        padding: 0;
-      }
-
-      #loginScreen,
-      #appShell > .container > *:not(#printSummary) {
-        display: none !important;
-      }
-
-      #printSummary {
-        display: block !important;
-        width: 100%;
-        max-width: none;
-        margin: 0;
-        padding: 0;
-      }
-    }
   </style>
 </head>
 <body>
@@ -474,13 +456,13 @@
       <div class="login-title">Compte rendu</div>
       <div class="login-subtitle">Connexion sécurisée</div>
 
-      <label for="loginId">Identifiant</label>
+      <label>Identifiant</label>
       <input id="loginId" type="text" autocomplete="username" />
 
-      <label for="loginPassword">Mot de passe</label>
+      <label>Mot de passe</label>
       <input id="loginPassword" type="password" autocomplete="current-password" />
 
-      <button class="main" type="button" id="loginButton">Se connecter</button>
+      <button class="main" type="button" onclick="loginApp()">Se connecter</button>
 
       <div id="loginError" class="error-msg hidden">
         Identifiant ou mot de passe incorrect.
@@ -494,26 +476,26 @@
       <div id="stepIndicator" class="step-indicator">Étape 1 sur 5</div>
 
       <div id="step1" class="step active">
-        <label for="nom">Nom</label>
+        <label>Nom</label>
         <input id="nom" type="text" />
 
-        <label for="prenom">Prénom</label>
+        <label>Prénom</label>
         <input id="prenom" type="text" />
 
-        <label for="adresse">Adresse</label>
+        <label>Adresse</label>
         <input id="adresse" type="text" />
 
-        <label for="intervention">Intervention</label>
+        <label>Intervention</label>
         <input id="intervention" type="text" />
 
-        <label for="date">Date</label>
+        <label>Date</label>
         <input id="date" type="text" readonly />
 
-        <label for="heure">Heure</label>
+        <label>Heure</label>
         <input id="heure" type="text" readonly />
 
         <div class="actions">
-          <button class="main" type="button" id="btnStep1Next">Valider</button>
+          <button class="main" type="button" onclick="goToStep2()">Valider</button>
         </div>
       </div>
 
@@ -539,16 +521,16 @@
           <input id="photoInput" class="photo-input hidden" type="file" accept="image/*" capture="environment" multiple />
 
           <div class="photo-buttons">
-            <button class="small" type="button" id="btnAddPhotos">Prendre / ajouter des photos</button>
-            <button class="small" type="button" id="btnClearPhotos">Effacer les photos</button>
+            <button class="small" type="button" onclick="photoInput.click()">Prendre / ajouter des photos</button>
+            <button class="small" type="button" onclick="clearPhotos()">Effacer les photos</button>
           </div>
 
           <div id="photoPreview" class="photo-preview"></div>
         </div>
 
         <div class="actions">
-          <button class="small" type="button" id="btnStep2Back">Retour</button>
-          <button class="main" type="button" id="btnStep2Next">Valider</button>
+          <button class="small" type="button" onclick="showStep(1)">Retour</button>
+          <button class="main" type="button" onclick="goToStep3Or4()">Valider</button>
         </div>
       </div>
 
@@ -574,15 +556,15 @@
         </div>
 
         <div class="actions">
-          <button class="small" type="button" id="btnStep3Back">Retour</button>
-          <button class="main" type="button" id="btnStep3Next">Valider</button>
+          <button class="small" type="button" onclick="showStep(2)">Retour</button>
+          <button class="main" type="button" onclick="goToStep4()">Valider</button>
         </div>
       </div>
 
       <div id="step4" class="step">
         <h2>Commentaire technicien</h2>
 
-        <label for="commentaire">Commentaire libre</label>
+        <label>Commentaire libre</label>
         <textarea
           id="commentaire"
           style="min-height:120px;"
@@ -598,8 +580,8 @@
         <div id="statusCommentaire" class="dictation-status"></div>
 
         <div class="actions">
-          <button class="small" type="button" id="btnStep4Back">Retour</button>
-          <button class="main" type="button" id="btnStep4Next">Valider</button>
+          <button class="small" type="button" onclick="goBackFromStep4()">Retour</button>
+          <button class="main" type="button" onclick="goToStep4b()">Valider</button>
         </div>
       </div>
 
@@ -623,15 +605,15 @@
 
         <div>
           <label>Satisfaction technicien</label>
-          <div id="techStarsContainer" class="stars"></div>
+          <div id="tech" class="stars"></div>
         </div>
 
         <div>
           <label>Satisfaction intervention</label>
-          <div id="interStarsContainer" class="stars"></div>
+          <div id="inter" class="stars"></div>
         </div>
 
-        <label for="commentaireClient">Commentaire client</label>
+        <label>Commentaire client</label>
         <textarea
           id="commentaireClient"
           style="min-height:140px;"
@@ -653,32 +635,32 @@
         </div>
 
         <div class="actions">
-          <button class="small" type="button" id="btnStep4bBack">Retour</button>
-          <button class="main" type="button" id="btnStep4bNext">Valider</button>
+          <button class="small" type="button" onclick="showStep(4)">Retour</button>
+          <button class="main" type="button" onclick="goToStep5()">Valider</button>
         </div>
       </div>
 
       <div id="step5" class="step">
         <div class="box">
-          L’intervention réalisée ce jour entre exclusivement dans le cadre de la prestation prévue. Toute gratification éventuellement remise au technicien reste facultative, volontaire et indépendante de l’intervention ; elle ne constitue en aucun cas le paiement de la prestation. Le client reconnaît également que tout matériel éventuellement laissé sur place a été remis gratuitement et sans facturation complémentaire directe du technicien.
+          L’intervention réalisée ce jour entre dans le cadre de la prestation prévue. Toute gratification éventuelle reste facultative et indépendante de l’intervention. Elle ne constitue pas le paiement de la prestation. Tout matériel éventuellement laissé sur place a été remis gratuitement, sans facturation.
         </div>
 
         <h2>Gratification</h2>
 
         <div class="row">
-          <label>Avez-vous donné une gratification ?</label>
+          <label>Une gratification volontaire a-t-elle été remise ?</label>
           <button class="yn" type="button" onclick="setYN('tip','oui', this)">Oui</button>
           <button class="yn" type="button" onclick="setYN('tip','non', this)">Non</button>
         </div>
 
         <h2>Signature client</h2>
 
-        <label for="dateCompleteValidation">Date complète de validation</label>
+        <label>Date complète de validation</label>
         <input id="dateCompleteValidation" type="text" readonly />
 
         <label class="checkline">
           <input type="checkbox" id="consentementLibre" />
-          <span>Je reconnais que toute gratification éventuelle est remise librement, sans contrainte, ne correspond pas au paiement de l’intervention, et que tout matériel éventuellement laissé sur place a été remis gratuitement et sans facturation complémentaire directe du technicien.</span>
+          <span>Je confirme que toute gratification est volontaire, sans lien avec la prestation, et que le matériel laissé a été remis gratuitement.</span>
         </label>
 
         <label class="checkline">
@@ -690,13 +672,13 @@
           <canvas id="sign"></canvas>
         </div>
 
-        <button class="small" type="button" id="btnClearSign">Effacer</button>
+        <button class="small" type="button" onclick="clearSign()">Effacer</button>
 
         <div class="actions">
-          <button class="small" type="button" id="btnStep5Back">Retour</button>
-          <button class="main" type="button" id="btnGeneratePdf">Imprimer / Enregistrer en PDF</button>
+          <button class="small" type="button" onclick="showStep(4.1)">Retour</button>
+          <button class="main" type="button" onclick="valider()">Ouvrir / télécharger PDF</button>
         </div>
-        <div class="pdf-actions-note">La fenêtre d’impression s’ouvre comme avant.</div>
+        <div class="pdf-actions-note">Le document s’ouvre en PDF, sans lancer l’impression automatiquement.</div>
       </div>
 
       <div id="printSummary">
@@ -731,7 +713,7 @@
 
         <div class="summary-card" id="printCommentaireTechCard">
           <div class="summary-title">Commentaire technicien</div>
-          <div class="summary-line"><strong>Commentaire :</strong> <span id="printCommentaireTech"></span></div>
+          <div class="summary-line" id="printCommentaireTech"></div>
         </div>
 
         <div class="summary-card">
@@ -750,8 +732,8 @@
         </div>
 
         <div class="summary-card">
-          <div class="summary-title">Cadre de l’intervention et gratification</div>
-          <div class="summary-line">L’intervention réalisée ce jour entre exclusivement dans le cadre de la prestation prévue. Toute gratification éventuellement remise au technicien reste facultative, volontaire et indépendante de l’intervention ; elle ne constitue en aucun cas le paiement de la prestation. Le client reconnaît également que tout matériel éventuellement laissé sur place a été remis gratuitement et sans facturation complémentaire directe du technicien.</div>
+          <div class="summary-title">Gratification</div>
+          <div class="summary-line">L’intervention réalisée ce jour entre dans le cadre de la prestation prévue. Toute gratification éventuelle reste facultative et indépendante de l’intervention. Elle ne constitue pas le paiement de la prestation. Tout matériel éventuellement laissé sur place a été remis gratuitement, sans facturation.</div>
           <div class="summary-line"><strong>Gratification donnée :</strong> <span id="printTip"></span></div>
         </div>
 
@@ -773,18 +755,18 @@
   </div>
 
   <script>
-    const APP_LOGIN = "admin";
-    const APP_PASSWORD = "harlow";
+    const APP_LOGIN = 'admin';
+    const APP_PASSWORD = 'harlow';
 
-    const state = {
+    let state = {
       ponctualite: 0,
       clarte: 0,
       proprete: 0,
       tech: 0,
       inter: 0,
-      client: "",
-      techYN: "",
-      tip: "",
+      client: '',
+      techYN: '',
+      tip: '',
       signed: false,
       currentStep: 1,
       photos: []
@@ -794,123 +776,57 @@
     let currentDictationTarget = null;
     let currentDictationStatus = null;
 
-    const loginScreen = document.getElementById("loginScreen");
-    const appShell = document.getElementById("appShell");
-    const loginId = document.getElementById("loginId");
-    const loginPassword = document.getElementById("loginPassword");
-    const loginError = document.getElementById("loginError");
-    const stepIndicator = document.getElementById("stepIndicator");
-
-    const nomField = document.getElementById("nom");
-    const prenomField = document.getElementById("prenom");
-    const adresseField = document.getElementById("adresse");
-    const interventionField = document.getElementById("intervention");
-    const dateField = document.getElementById("date");
-    const heureField = document.getElementById("heure");
-
-    const restart = document.getElementById("restart");
-    const protecline = document.getElementById("protecline");
-    const photoSection = document.getElementById("photoSection");
-    const photoInput = document.getElementById("photoInput");
-    const photoPreview = document.getElementById("photoPreview");
-
-    const commentaireField = document.getElementById("commentaire");
-    const commentaireClientField = document.getElementById("commentaireClient");
-    const dateCompleteValidationField = document.getElementById("dateCompleteValidation");
-    const consentementLibre = document.getElementById("consentementLibre");
-    const luApprouve = document.getElementById("luApprouve");
-
-    const c = document.getElementById("sign");
-    const ctx = c.getContext("2d");
-
-    let isDrawing = false;
-
-    function hideLoginError() {
-      loginError.classList.add("hidden");
-    }
-
     function loginApp() {
-      const id = loginId.value.trim();
-      const password = loginPassword.value;
+      const id = document.getElementById('loginId').value.trim();
+      const password = document.getElementById('loginPassword').value;
+      const error = document.getElementById('loginError');
 
       if (id === APP_LOGIN && password === APP_PASSWORD) {
-        sessionStorage.setItem("appLoggedIn", "yes");
-
-        loginScreen.classList.add("hidden");
-        loginScreen.style.display = "none";
-
-        appShell.classList.remove("hidden-app");
-        appShell.style.display = "block";
-
-        hideLoginError();
-        showStep(1);
-
-        setTimeout(function () {
-          resizeCanvasPreserve();
-        }, 50);
-
+        sessionStorage.setItem('appLoggedIn', 'yes');
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('appShell').classList.remove('hidden-app');
+        error.classList.add('hidden');
+        setTimeout(resizeCanvas, 50);
         return;
       }
 
-      loginError.classList.remove("hidden");
+      error.classList.remove('hidden');
     }
 
     function checkLogin() {
-      const logged = sessionStorage.getItem("appLoggedIn") === "yes";
+      const logged = sessionStorage.getItem('appLoggedIn') === 'yes';
 
       if (logged) {
-        loginScreen.classList.add("hidden");
-        loginScreen.style.display = "none";
-
-        appShell.classList.remove("hidden-app");
-        appShell.style.display = "block";
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('appShell').classList.remove('hidden-app');
       } else {
-        loginScreen.classList.remove("hidden");
-        loginScreen.style.display = "flex";
-
-        appShell.classList.add("hidden-app");
-        appShell.style.display = "none";
+        document.getElementById('loginScreen').style.display = 'flex';
+        document.getElementById('appShell').classList.add('hidden-app');
       }
     }
 
-    function getDisplayedStepNumber(step) {
-      if (step === "4b") return 4;
-      return Number(step);
-    }
-
     function updateStepIndicator() {
-      stepIndicator.textContent = "Étape " + getDisplayedStepNumber(state.currentStep) + " sur 5";
+      document.getElementById('stepIndicator').textContent = 'Étape ' + state.currentStep + ' sur 5';
     }
 
     function showStep(step) {
-      if (appShell.classList.contains("hidden-app")) return;
-
-      document.querySelectorAll(".step").forEach(function (el) {
-        el.classList.remove("active");
+      document.querySelectorAll('.step').forEach(function (el) {
+        el.classList.remove('active');
       });
 
-      const map = {
-        1: "step1",
-        2: "step2",
-        3: "step3",
-        4: "step4",
-        "4b": "step4b",
-        5: "step5"
-      };
-
-      document.getElementById(map[step]).classList.add("active");
+      document.getElementById(step === 4.1 ? 'step4b' : 'step' + step).classList.add('active');
       state.currentStep = step;
       updateStepIndicator();
 
       if (step === 5) {
         setDateCompleteValidation();
-        setTimeout(resizeCanvasPreserve, 50);
+        setTimeout(resizeCanvas, 50);
       }
     }
 
     function goToStep2() {
-      if (!nomField.value.trim() || !prenomField.value.trim() || !adresseField.value.trim() || !interventionField.value.trim()) {
-        alert("Merci de remplir le nom, le prénom, l’adresse et l’intervention.");
+      if (!nom.value || !prenom.value || !adresse.value || !intervention.value) {
+        alert('Merci de remplir le nom, le prénom, l’adresse et l’intervention.');
         return;
       }
       showStep(2);
@@ -918,7 +834,7 @@
 
     function goToStep3Or4() {
       if (!restart.checked && !protecline.checked) {
-        alert("Merci de sélectionner un type d’intervention.");
+        alert('Merci de sélectionner un type d’intervention.');
         return;
       }
 
@@ -931,7 +847,7 @@
 
     function goToStep4() {
       if (!state.client || !state.techYN) {
-        alert("Merci de renseigner la partie application.");
+        alert('Merci de renseigner la partie application.');
         return;
       }
       showStep(4);
@@ -946,12 +862,12 @@
     }
 
     function goToStep4b() {
-      showStep("4b");
+      showStep(4.1);
     }
 
     function goToStep5() {
       if (!state.ponctualite || !state.clarte || !state.proprete || !state.tech || !state.inter) {
-        alert("Merci de renseigner toutes les notes.");
+        alert('Merci de renseigner toutes les notes.');
         return;
       }
       showStep(5);
@@ -959,74 +875,86 @@
 
     function stars(id, key) {
       const el = document.getElementById(id);
-      el.innerHTML = "";
+      el.innerHTML = '';
 
       for (let i = 1; i <= 5; i++) {
-        const b = document.createElement("button");
-        b.type = "button";
-        b.textContent = "★";
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.innerHTML = '★';
 
         if (i <= state[key]) {
-          b.classList.add("active");
+          b.classList.add('active');
         }
 
-        b.addEventListener("click", function () {
+        b.onclick = function () {
           state[key] = i;
           stars(id, key);
-        });
+        };
 
         el.appendChild(b);
       }
     }
 
     function setYN(type, val, btn) {
-      if (type === "client") {
+      if (type === 'client') {
         state.client = val;
-      } else if (type === "tech") {
+      } else if (type === 'tech') {
         state.techYN = val;
-      } else if (type === "tip") {
+      } else if (type === 'tip') {
         state.tip = val;
       }
 
-      btn.parentElement.querySelectorAll(".yn").forEach(function (b) {
-        b.classList.remove("active");
+      btn.parentElement.querySelectorAll('.yn').forEach(function (b) {
+        b.classList.remove('active');
       });
 
-      btn.classList.add("active");
+      btn.classList.add('active');
     }
 
-    window.setYN = setYN;
+    const restart = document.getElementById('restart');
+    const protecline = document.getElementById('protecline');
+    const photoSection = document.getElementById('photoSection');
+    const photoInput = document.getElementById('photoInput');
+    const photoPreview = document.getElementById('photoPreview');
 
     function renderPhotoPreview() {
-      photoPreview.innerHTML = "";
-
+      photoPreview.innerHTML = '';
       state.photos.forEach(function (src) {
-        const img = document.createElement("img");
+        const img = document.createElement('img');
         img.src = src;
-        img.alt = "Photo intervention";
         photoPreview.appendChild(img);
       });
     }
 
     function clearPhotos() {
       state.photos = [];
-      photoInput.value = "";
+      photoInput.value = '';
       renderPhotoPreview();
     }
 
-    function updatePhotoSection() {
+    function updatePhotoSection(openCamera) {
       const interventionChecked = restart.checked || protecline.checked;
-      photoSection.style.display = interventionChecked ? "block" : "none";
+      photoSection.style.display = interventionChecked ? 'block' : 'none';
 
       if (!interventionChecked) {
         clearPhotos();
       }
+
+      if (openCamera && interventionChecked) {
+        photoInput.click();
+      }
     }
 
-    photoInput.addEventListener("change", function () {
-      const files = Array.from(photoInput.files || []);
+    restart.addEventListener('change', function () {
+      updatePhotoSection(restart.checked);
+    });
 
-      files.forEach(function (file) {
+    protecline.addEventListener('change', function () {
+      updatePhotoSection(protecline.checked);
+    });
+
+    photoInput.addEventListener('change', function () {
+      Array.from(photoInput.files).forEach(function (file) {
         const reader = new FileReader();
         reader.onload = function (e) {
           state.photos.push(e.target.result);
@@ -1034,14 +962,13 @@
         };
         reader.readAsDataURL(file);
       });
-
-      photoInput.value = "";
+      photoInput.value = '';
     });
 
     function clearDictationStatuses() {
-      ["statusCommentaire", "statusCommentaireClient"].forEach(function (id) {
+      ['statusCommentaire', 'statusCommentaireClient'].forEach(function(id) {
         const el = document.getElementById(id);
-        if (el) el.textContent = "";
+        if (el) el.textContent = '';
       });
     }
 
@@ -1049,7 +976,7 @@
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
       if (!SpeechRecognition) {
-        alert("La dictée vocale n’est pas prise en charge sur cet appareil ou ce navigateur.");
+        alert('La dictée vocale n’est pas prise en charge sur cet appareil ou ce navigateur.');
         return;
       }
 
@@ -1061,54 +988,42 @@
       if (!currentDictationTarget || !currentDictationStatus) return;
 
       recognition = new SpeechRecognition();
-      recognition.lang = "fr-FR";
-      recognition.interimResults = false;
+      recognition.lang = 'fr-FR';
+      recognition.interimResults = true;
       recognition.continuous = true;
-      recognition.maxAlternatives = 1;
+
+      const initialText = currentDictationTarget.value.trim();
+      let finalTranscript = '';
 
       clearDictationStatuses();
-      currentDictationStatus.textContent = "Écoute en cours...";
+      currentDictationStatus.textContent = 'Écoute en cours...';
 
-      recognition.onresult = function (event) {
-        let appendedText = "";
+      recognition.onresult = function(event) {
+        let interimTranscript = '';
 
         for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript;
           if (event.results[i].isFinal) {
-            appendedText += event.results[i][0].transcript + " ";
+            finalTranscript += transcript + ' ';
+          } else {
+            interimTranscript += transcript;
           }
         }
 
-        appendedText = appendedText.trim();
-
-        if (!appendedText) return;
-
-        const currentText = currentDictationTarget.value.trim();
-
-        if (currentText.endsWith(appendedText)) return;
-
-        currentDictationTarget.value = (currentText ? currentText + " " : "") + appendedText;
-        currentDictationTarget.value = currentDictationTarget.value.replace(/\s+/g, " ").trim();
+        const prefix = initialText ? initialText + ' ' : '';
+        currentDictationTarget.value = (prefix + finalTranscript + interimTranscript).trim();
       };
 
-      recognition.onerror = function (event) {
-        if (!currentDictationStatus) return;
-
-        if (event.error === "no-speech") {
-          currentDictationStatus.textContent = "Aucune voix détectée.";
-        } else if (event.error === "audio-capture") {
-          currentDictationStatus.textContent = "Microphone indisponible.";
-        } else if (event.error === "not-allowed") {
-          currentDictationStatus.textContent = "Autorisation micro refusée.";
-        } else {
-          currentDictationStatus.textContent = "Erreur dictée : " + event.error;
+      recognition.onerror = function(event) {
+        if (currentDictationStatus) {
+          currentDictationStatus.textContent = 'Erreur dictée : ' + event.error;
         }
       };
 
-      recognition.onend = function () {
-        if (currentDictationStatus && currentDictationStatus.textContent === "Écoute en cours...") {
-          currentDictationStatus.textContent = "Dictée arrêtée.";
+      recognition.onend = function() {
+        if (currentDictationStatus && currentDictationStatus.textContent === 'Écoute en cours...') {
+          currentDictationStatus.textContent = 'Dictée arrêtée.';
         }
-        recognition = null;
       };
 
       recognition.start();
@@ -1117,48 +1032,31 @@
     function stopDictation() {
       if (recognition) {
         recognition.stop();
+        recognition = null;
       }
-
-      if (currentDictationStatus && currentDictationStatus.textContent === "Écoute en cours...") {
-        currentDictationStatus.textContent = "Dictée arrêtée.";
+      if (currentDictationStatus && currentDictationStatus.textContent === 'Écoute en cours...') {
+        currentDictationStatus.textContent = 'Dictée arrêtée.';
       }
     }
 
-    window.startDictation = startDictation;
-    window.stopDictation = stopDictation;
+    const c = document.getElementById('sign');
+    const ctx = c.getContext('2d');
+    let d = false;
 
-    function setupCanvasStyle() {
-      ctx.setTransform(1, 0, 0, 1, 0, 0);
+    function resizeCanvas() {
       const ratio = Math.max(window.devicePixelRatio || 1, 1);
-      ctx.scale(ratio, ratio);
-      ctx.lineWidth = 2.2;
-      ctx.lineCap = "round";
-      ctx.strokeStyle = "#111827";
-    }
-
-    function resizeCanvasPreserve() {
       const rect = c.getBoundingClientRect();
+
       if (!rect.width || !rect.height) return;
 
-      let previousImage = null;
-
-      if (c.width > 0 && c.height > 0 && state.signed) {
-        previousImage = c.toDataURL("image/png");
-      }
-
-      const ratio = Math.max(window.devicePixelRatio || 1, 1);
       c.width = Math.floor(rect.width * ratio);
       c.height = Math.floor(rect.height * ratio);
 
-      setupCanvasStyle();
-
-      if (previousImage) {
-        const img = new Image();
-        img.onload = function () {
-          ctx.drawImage(img, 0, 0, rect.width, rect.height);
-        };
-        img.src = previousImage;
-      }
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.scale(ratio, ratio);
+      ctx.lineWidth = 2.2;
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = '#111827';
     }
 
     function pointFromEvent(e) {
@@ -1185,7 +1083,7 @@
     }
 
     function startDraw(e) {
-      isDrawing = true;
+      d = true;
       const p = pointFromEvent(e);
       ctx.beginPath();
       ctx.moveTo(p.x, p.y);
@@ -1193,7 +1091,7 @@
     }
 
     function moveDraw(e) {
-      if (!isDrawing) return;
+      if (!d) return;
       const p = pointFromEvent(e);
       ctx.lineTo(p.x, p.y);
       ctx.stroke();
@@ -1202,121 +1100,156 @@
     }
 
     function endDraw(e) {
-      if (!isDrawing) return;
-      isDrawing = false;
+      if (!d) return;
+      d = false;
       ctx.beginPath();
       if (e && e.preventDefault) e.preventDefault();
     }
 
     function clearSign() {
-      const rect = c.getBoundingClientRect();
-      ctx.clearRect(0, 0, rect.width, rect.height);
+      ctx.clearRect(0, 0, c.width, c.height);
+      resizeCanvas();
       state.signed = false;
-      resizeCanvasPreserve();
+    }
+
+    function slugify(value) {
+      let s = String(value || '').trim();
+      s = s.replace(/\s+/g, '-');
+      s = s.replace(/[\/:]/g, '-');
+      return s;
     }
 
     function formatDateComplete(now) {
-      return now.toLocaleString("fr-FR", {
-        weekday: "long",
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit"
+      return now.toLocaleString('fr-FR', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
       });
     }
 
     function setDateCompleteValidation() {
       const now = new Date();
-      dateCompleteValidationField.value = formatDateComplete(now);
-    }
-
-    function setText(id, value) {
-      document.getElementById(id).textContent = value || "";
+      document.getElementById('dateCompleteValidation').value = formatDateComplete(now);
     }
 
     function fillPrintSummary() {
-      setText("printNom", nomField.value);
-      setText("printPrenom", prenomField.value);
-      setText("printAdresse", adresseField.value);
-      setText("printIntervention", interventionField.value);
-      setText("printDate", dateField.value);
-      setText("printHeure", heureField.value);
+      document.getElementById('printNom').textContent = nom.value || '';
+      document.getElementById('printPrenom').textContent = prenom.value || '';
+      document.getElementById('printAdresse').textContent = adresse.value || '';
+      document.getElementById('printIntervention').textContent = intervention.value || '';
+      document.getElementById('printDate').textContent = date.value || '';
+      document.getElementById('printHeure').textContent = heure.value || '';
 
-      setText("printRestart", restart.checked ? "Oui" : "Non");
-      setText("printProtecline", protecline.checked ? "Oui" : "Non");
+      document.getElementById('printRestart').textContent = restart.checked ? 'Oui' : 'Non';
+      document.getElementById('printProtecline').textContent = protecline.checked ? 'Oui' : 'Non';
 
-      setText("printClientApp", state.client || "Non renseigné");
-      setText("printTechApp", state.techYN || "Non renseigné");
+      document.getElementById('printClientApp').textContent = state.client || 'Non renseigné';
+      document.getElementById('printTechApp').textContent = state.techYN || 'Non renseigné';
 
-      setText("printCommentaireTech", commentaireField.value || "");
-      setText("printPonctualite", state.ponctualite ? state.ponctualite + " / 5" : "");
-      setText("printClarte", state.clarte ? state.clarte + " / 5" : "");
-      setText("printProprete", state.proprete ? state.proprete + " / 5" : "");
-      setText("printTechStars", state.tech ? state.tech + " / 5" : "");
-      setText("printInterStars", state.inter ? state.inter + " / 5" : "");
-      setText("printCommentaireClient", commentaireClientField.value || "");
+      document.getElementById('printCommentaireTech').innerHTML =
+        '<strong>Commentaire :</strong> ' + (document.getElementById('commentaire').value || '');
 
-      setText("printTip", state.tip || "");
-      setText("printDateCompleteValidation", dateCompleteValidationField.value || "");
-      setText("printConsentementLibre", consentementLibre.checked ? "Oui" : "Non");
-      setText("printLuApprouve", luApprouve.checked ? "Oui" : "Non");
+      document.getElementById('printPonctualite').textContent = state.ponctualite ? state.ponctualite + ' / 5' : '';
+      document.getElementById('printClarte').textContent = state.clarte ? state.clarte + ' / 5' : '';
+      document.getElementById('printProprete').textContent = state.proprete ? state.proprete + ' / 5' : '';
+      document.getElementById('printTechStars').textContent = state.tech ? state.tech + ' / 5' : '';
+      document.getElementById('printInterStars').textContent = state.inter ? state.inter + ' / 5' : '';
+      document.getElementById('printCommentaireClient').textContent = document.getElementById('commentaireClient').value || '';
 
-      document.getElementById("printApplicationCard").style.display = protecline.checked ? "block" : "none";
-      document.getElementById("printPhotosCard").style.display = state.photos.length ? "block" : "none";
+      document.getElementById('printTip').textContent = state.tip || '';
+      document.getElementById('printDateCompleteValidation').textContent = document.getElementById('dateCompleteValidation').value || '';
+      document.getElementById('printConsentementLibre').textContent = document.getElementById('consentementLibre').checked ? 'Oui' : 'Non';
+      document.getElementById('printLuApprouve').textContent = document.getElementById('luApprouve').checked ? 'Oui' : 'Non';
 
-      const printPhotos = document.getElementById("printPhotos");
-      printPhotos.innerHTML = "";
+      document.getElementById('printApplicationCard').style.display = protecline.checked ? 'block' : 'none';
+      document.getElementById('printPhotosCard').style.display = state.photos.length ? 'block' : 'none';
+
+      const printPhotos = document.getElementById('printPhotos');
+      printPhotos.innerHTML = '';
 
       state.photos.forEach(function (src) {
-        const img = document.createElement("img");
+        const img = document.createElement('img');
         img.src = src;
-        img.alt = "Photo installation";
         printPhotos.appendChild(img);
       });
 
-      document.getElementById("printSignature").src = state.signed ? c.toDataURL("image/png") : "";
+      document.getElementById('printSignature').src = state.signed ? c.toDataURL('image/png') : '';
     }
 
-    async function printDocument() {
-      const element = document.getElementById("printSummary");
-      const previousDisplay = element.style.display;
-      element.style.display = "block";
+    async function generatePdf() {
+      const { jsPDF } = window.jspdf;
+      const element = document.getElementById('printSummary');
 
-      await new Promise(function (resolve) {
-        requestAnimationFrame(function () {
-          setTimeout(resolve, 250);
-        });
+      const previousDisplay = element.style.display;
+      element.style.display = 'block';
+
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        scrollX: 0,
+        scrollY: 0
       });
 
-      window.print();
+      element.style.display = previousDisplay || 'none';
 
-      setTimeout(function () {
-        element.style.display = previousDisplay || "none";
-      }, 300);
+      const imgData = canvas.toDataURL('image/jpeg', 0.98);
+      const pdf = new jsPDF('p', 'mm', 'a4');
+
+      const pdfWidth = 210;
+      const pdfHeight = 297;
+      const margin = 8;
+      const usableWidth = pdfWidth - (margin * 2);
+
+      const imgWidth = usableWidth;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      let heightLeft = imgHeight;
+      let position = margin;
+
+      pdf.addImage(imgData, 'JPEG', margin, position, imgWidth, imgHeight);
+      heightLeft -= (pdfHeight - margin * 2);
+
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight + margin;
+        pdf.addPage();
+        pdf.addImage(imgData, 'JPEG', margin, position, imgWidth, imgHeight);
+        heightLeft -= (pdfHeight - margin * 2);
+      }
+
+      const fileDate = slugify(date.value || 'date');
+      const fileNom = slugify(nom.value || 'nom');
+      const filePrenom = slugify(prenom.value || 'prenom');
+      const fileInter = slugify(intervention.value || 'intervention');
+      const fileName = fileDate + '_' + fileNom + '_' + filePrenom + '_' + fileInter + '.pdf';
+
+      pdf.save(fileName);
     }
 
     async function valider() {
       stopDictation();
 
       if (!state.tip) {
-        alert("Merci de renseigner la gratification.");
+        alert('Merci de renseigner la gratification.');
         return;
       }
 
-      if (!consentementLibre.checked) {
-        alert("Merci de cocher la déclaration de consentement libre et volontaire.");
+      if (!document.getElementById('consentementLibre').checked) {
+        alert('Merci de cocher la déclaration de consentement libre et volontaire.');
         return;
       }
 
-      if (!luApprouve.checked) {
+      if (!document.getElementById('luApprouve').checked) {
         alert('Merci de cocher la mention "Lu et approuvé".');
         return;
       }
 
       if (!state.signed) {
-        alert("Merci de signer.");
+        alert('Merci de signer.');
         return;
       }
 
@@ -1324,97 +1257,60 @@
       fillPrintSummary();
 
       try {
-        await printDocument();
+        await generatePdf();
       } catch (e) {
         console.error(e);
-        alert("Erreur lors de l’ouverture de l’impression.");
+        alert('Erreur lors de la génération du PDF.');
       }
-    }
-
-    function initDateTime() {
-      const now = new Date();
-      dateField.value = now.toLocaleDateString("fr-FR");
-      heureField.value = now.toLocaleTimeString("fr-FR", {
-        hour: "2-digit",
-        minute: "2-digit"
-      });
-    }
-
-    function bindEvents() {
-      document.getElementById("loginButton").addEventListener("click", loginApp);
-
-      loginId.addEventListener("input", hideLoginError);
-      loginPassword.addEventListener("input", hideLoginError);
-
-      loginPassword.addEventListener("keydown", function (e) {
-        if (e.key === "Enter") loginApp();
-      });
-
-      loginId.addEventListener("keydown", function (e) {
-        if (e.key === "Enter") loginApp();
-      });
-
-      document.getElementById("btnStep1Next").addEventListener("click", goToStep2);
-      document.getElementById("btnStep2Back").addEventListener("click", function () { showStep(1); });
-      document.getElementById("btnStep2Next").addEventListener("click", goToStep3Or4);
-      document.getElementById("btnStep3Back").addEventListener("click", function () { showStep(2); });
-      document.getElementById("btnStep3Next").addEventListener("click", goToStep4);
-      document.getElementById("btnStep4Back").addEventListener("click", goBackFromStep4);
-      document.getElementById("btnStep4Next").addEventListener("click", goToStep4b);
-      document.getElementById("btnStep4bBack").addEventListener("click", function () { showStep(4); });
-      document.getElementById("btnStep4bNext").addEventListener("click", goToStep5);
-      document.getElementById("btnStep5Back").addEventListener("click", function () { showStep("4b"); });
-      document.getElementById("btnGeneratePdf").addEventListener("click", valider);
-
-      document.getElementById("btnAddPhotos").addEventListener("click", function () {
-        photoInput.click();
-      });
-
-      document.getElementById("btnClearPhotos").addEventListener("click", clearPhotos);
-      document.getElementById("btnClearSign").addEventListener("click", clearSign);
-
-      restart.addEventListener("change", updatePhotoSection);
-      protecline.addEventListener("change", updatePhotoSection);
-
-      c.addEventListener("mousedown", startDraw);
-      c.addEventListener("mousemove", moveDraw);
-      c.addEventListener("mouseup", endDraw);
-      c.addEventListener("mouseleave", endDraw);
-
-      c.addEventListener("touchstart", startDraw, { passive: false });
-      c.addEventListener("touchmove", moveDraw, { passive: false });
-      c.addEventListener("touchend", endDraw, { passive: false });
-      c.addEventListener("touchcancel", endDraw, { passive: false });
-
-      window.addEventListener("resize", resizeCanvasPreserve);
     }
 
     function init() {
-      initDateTime();
+      const n = new Date();
+      date.value = n.toLocaleDateString('fr-FR');
+      heure.value = n.toLocaleTimeString('fr-FR', {
+        hour: '2-digit',
+        minute: '2-digit'
+      });
 
-      stars("ponctualite", "ponctualite");
-      stars("clarte", "clarte");
-      stars("proprete", "proprete");
-      stars("techStarsContainer", "tech");
-      stars("interStarsContainer", "inter");
+      stars('ponctualite', 'ponctualite');
+      stars('clarte', 'clarte');
+      stars('proprete', 'proprete');
+      stars('tech', 'tech');
+      stars('inter', 'inter');
 
-      updatePhotoSection();
-      bindEvents();
+      updatePhotoSection(false);
+      showStep(1);
       checkLogin();
 
-      if (!appShell.classList.contains("hidden-app")) {
-        showStep(1);
-      }
-
-      setTimeout(resizeCanvasPreserve, 50);
+      setTimeout(resizeCanvas, 50);
     }
 
-    if ("serviceWorker" in navigator) {
-      window.addEventListener("load", function () {
-        navigator.serviceWorker.register("sw.js").catch(function (err) {
-          console.error("Erreur SW :", err);
-        });
-      });
+    c.addEventListener('mousedown', startDraw);
+    c.addEventListener('mousemove', moveDraw);
+    c.addEventListener('mouseup', endDraw);
+    c.addEventListener('mouseleave', endDraw);
+
+    c.addEventListener('touchstart', startDraw, { passive: false });
+    c.addEventListener('touchmove', moveDraw, { passive: false });
+    c.addEventListener('touchend', endDraw, { passive: false });
+    c.addEventListener('touchcancel', endDraw, { passive: false });
+
+    window.addEventListener('resize', resizeCanvas);
+
+    document.getElementById('loginPassword').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        loginApp();
+      }
+    });
+
+    document.getElementById('loginId').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        loginApp();
+      }
+    });
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js');
     }
 
     init();
