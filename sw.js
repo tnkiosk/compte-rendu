@@ -1,59 +1,52 @@
-const CACHE_NAME = 'compte-rendu-v8';
+const CACHE_NAME = 'compte-rendu-v9';
 const APP_SHELL = [
   './',
   './index.html',
-  './manifest.webmanifest'
+  './manifest.webmanifest',
+  './sw.js'
 ];
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(APP_SHELL);
-    })
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL))
   );
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
+    caches.keys().then((keys) =>
+      Promise.all(
         keys.map((key) => {
           if (key !== CACHE_NAME) {
             return caches.delete(key);
           }
         })
-      );
-    }).then(() => self.clients.claim())
+      )
+    ).then(() => self.clients.claim())
   );
 });
 
 self.addEventListener('fetch', (event) => {
   const request = event.request;
 
-  if (request.method !== 'GET') {
-    return;
-  }
+  if (request.method !== 'GET') return;
 
   const url = new URL(request.url);
 
-  if (url.origin !== self.location.origin) {
-    return;
-  }
+  if (url.origin !== self.location.origin) return;
 
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          const responseClone = response.clone();
+          const clone = response.clone();
           caches.open(CACHE_NAME).then((cache) => {
-            cache.put('./index.html', responseClone);
+            cache.put('./index.html', clone);
           });
           return response;
         })
-        .catch(() => {
-          return caches.match('./index.html');
-        })
+        .catch(() => caches.match('./index.html'))
     );
     return;
   }
@@ -61,19 +54,21 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     fetch(request)
       .then((response) => {
-        const responseClone = response.clone();
+        if (!response || response.status !== 200 || response.type !== 'basic') {
+          return response;
+        }
+
+        const clone = response.clone();
         caches.open(CACHE_NAME).then((cache) => {
-          cache.put(request, responseClone);
+          cache.put(request, clone);
         });
+
         return response;
       })
-      .catch(() => {
-        return caches.match(request).then((cachedResponse) => {
-          if (cachedResponse) {
-            return cachedResponse;
-          }
-          return caches.match('./index.html');
-        });
-      })
+      .catch(() =>
+        caches.match(request).then((cached) => {
+          return cached || caches.match('./index.html');
+        })
+      )
   );
 });
