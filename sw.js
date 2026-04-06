@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'compte-rendu-v13';
+console.log('SERVICE WORKER V13 ACTIF');
 const APP_SHELL = [
   './',
   './index.html',
