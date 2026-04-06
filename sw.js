@@ -1,94 +1,88 @@
-console.log('SERVICE WORKER V13 ACTIF');
+const CACHE_VERSION = 'compte-rendu-v14';
 const APP_SHELL = [
   './',
   './index.html',
-  './manifest.webmanifest'
+  './manifest.webmanifest',
+  'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'
 ];
 
-// Installation
 self.addEventListener('install', (event) => {
   self.skipWaiting();
-
   event.waitUntil(
-    caches.open(CACHE_VERSION).then((cache) => {
-      return cache.addAll(APP_SHELL);
-    })
+    caches.open(CACHE_VERSION).then((cache) => cache.addAll(APP_SHELL))
   );
 });
 
-// Activation
 self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys.map((key) => {
-          if (key !== CACHE_VERSION) {
-            return caches.delete(key);
-          }
-        })
-      );
-    }).then(() => self.clients.claim())
-  );
+  event.waitUntil((async () => {
+    const keys = await caches.keys();
+    await Promise.all(
+      keys
+        .filter((key) => key !== CACHE_VERSION)
+        .map((key) => caches.delete(key))
+    );
+
+    await self.clients.claim();
+
+    const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    clients.forEach((client) => {
+      client.postMessage({ type: 'SW_UPDATED' });
+    });
+  })());
 });
 
-// Fetch
 self.addEventListener('fetch', (event) => {
-  const request = event.request;
+  const req = event.request;
+  const url = new URL(req.url);
 
-  // Ne gérer que GET
-  if (request.method !== 'GET') {
-    return;
-  }
+  if (req.method !== 'GET') return;
 
-  const url = new URL(request.url);
+  const isHTML =
+    req.mode === 'navigate' ||
+    (req.headers.get('accept') || '').includes('text/html');
 
-  // Ignorer les extensions navigateur ou autres requêtes spéciales
-  if (
-    url.protocol !== 'http:' &&
-    url.protocol !== 'https:'
-  ) {
-    return;
-  }
-
-  // HTML : toujours essayer le réseau d'abord
-  if (request.mode === 'navigate') {
+  if (isHTML) {
     event.respondWith(
-      fetch(request)
-        .then((response) => {
-          const responseClone = response.clone();
+      fetch(req, { cache: 'no-store' })
+        .then((networkResponse) => {
+          const responseClone = networkResponse.clone();
           caches.open(CACHE_VERSION).then((cache) => {
             cache.put('./index.html', responseClone);
           });
-          return response;
+          return networkResponse;
         })
-        .catch(() => {
-          return caches.match('./index.html');
-        })
+        .catch(() => caches.match('./index.html'))
     );
     return;
   }
 
-  // CDN / JS / CSS / images / manifest : cache first + mise à jour en fond
-  event.respondWith(
-    caches.match(request).then((cachedResponse) => {
-      const fetchPromise = fetch(request)
-        .then((networkResponse) => {
-          if (
-            networkResponse &&
-            networkResponse.status === 200 &&
-            networkResponse.type === 'basic' ||
-            networkResponse.type === 'cors'
-          ) {
-            const responseClone = networkResponse.clone();
-            caches.open(CACHE_VERSION).then((cache) => {
-              cache.put(request, responseClone);
-            });
-          }
-          return networkResponse;
-        })
-        .catch(() => cachedResponse);
+  if (
+    url.pathname.endsWith('/sw.js') ||
+    url.pathname.endsWith('/manifest.webmanifest')
+  ) {
+    event.respondWith(
+      fetch(req, { cache: 'no-store' }).catch(() => caches.match(req))
+    );
+    return;
+  }
 
-      return cachedResponse || fetchPromise;
+  event.respondWith(
+    caches.match(req).then((cachedResponse) => {
+      if (cachedResponse) return cachedResponse;
+
+      return fetch(req).then((networkResponse) => {
+        if (!networkResponse || networkResponse.status !== 200 || networkResponse.type === 'opaque') {
+          return networkResponse;
+        }
+
+        const responseClone = networkResponse.clone();
+        caches.open(CACHE_VERSION).then((cache) => {
+          cache.put(req, responseClone);
+        });
+
+        return networkResponse;
+      });
     })
   );
 });
