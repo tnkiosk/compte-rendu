@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Compte rendu Technicien</title>
-  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="manifest" href="manifest.webmanifest?v=14" />
   <meta name="theme-color" content="#f97316" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -545,8 +545,8 @@
 
         <div class="row">
           <label>Le technicien a-t-il installé l'application et activé le compte du client ?</label>
-          <button class="yn" type="button" onclick="setYN('tech','oui', this)">Oui</button>
-          <button class="yn" type="button" onclick="setYN('tech','non', this)">Non</button>
+          <button class="yn" type="button" onclick="setYN('techYN','oui', this)">Oui</button>
+          <button class="yn" type="button" onclick="setYN('techYN','non', this)">Non</button>
         </div>
 
         <div class="box">
@@ -755,8 +755,16 @@
   </div>
 
   <script>
+    const APP_VERSION = 'v14';
     const APP_LOGIN = 'admin';
     const APP_PASSWORD = 'harlow';
+
+    const nom = document.getElementById('nom');
+    const prenom = document.getElementById('prenom');
+    const adresse = document.getElementById('adresse');
+    const intervention = document.getElementById('intervention');
+    const dateField = document.getElementById('date');
+    const heureField = document.getElementById('heure');
 
     let state = {
       ponctualite: 0,
@@ -898,7 +906,7 @@
     function setYN(type, val, btn) {
       if (type === 'client') {
         state.client = val;
-      } else if (type === 'tech') {
+      } else if (type === 'techYN') {
         state.techYN = val;
       } else if (type === 'tip') {
         state.tip = val;
@@ -932,26 +940,17 @@
       renderPhotoPreview();
     }
 
-    function updatePhotoSection(openCamera) {
+    function updatePhotoSection() {
       const interventionChecked = restart.checked || protecline.checked;
       photoSection.style.display = interventionChecked ? 'block' : 'none';
 
       if (!interventionChecked) {
         clearPhotos();
       }
-
-      if (openCamera && interventionChecked) {
-        photoInput.click();
-      }
     }
 
-    restart.addEventListener('change', function () {
-      updatePhotoSection(restart.checked);
-    });
-
-    protecline.addEventListener('change', function () {
-      updatePhotoSection(protecline.checked);
-    });
+    restart.addEventListener('change', updatePhotoSection);
+    protecline.addEventListener('change', updatePhotoSection);
 
     photoInput.addEventListener('change', function () {
       Array.from(photoInput.files).forEach(function (file) {
@@ -1026,12 +1025,18 @@
         }
       };
 
-      recognition.start();
+      try {
+        recognition.start();
+      } catch (e) {
+        currentDictationStatus.textContent = 'Impossible de démarrer la dictée.';
+      }
     }
 
     function stopDictation() {
       if (recognition) {
-        recognition.stop();
+        try {
+          recognition.stop();
+        } catch (e) {}
         recognition = null;
       }
       if (currentDictationStatus && currentDictationStatus.textContent === 'Écoute en cours...') {
@@ -1049,6 +1054,8 @@
 
       if (!rect.width || !rect.height) return;
 
+      const previous = state.signed ? c.toDataURL('image/png') : null;
+
       c.width = Math.floor(rect.width * ratio);
       c.height = Math.floor(rect.height * ratio);
 
@@ -1057,6 +1064,14 @@
       ctx.lineWidth = 2.2;
       ctx.lineCap = 'round';
       ctx.strokeStyle = '#111827';
+
+      if (previous) {
+        const img = new Image();
+        img.onload = function() {
+          ctx.drawImage(img, 0, 0, rect.width, rect.height);
+        };
+        img.src = previous;
+      }
     }
 
     function pointFromEvent(e) {
@@ -1141,8 +1156,8 @@
       document.getElementById('printPrenom').textContent = prenom.value || '';
       document.getElementById('printAdresse').textContent = adresse.value || '';
       document.getElementById('printIntervention').textContent = intervention.value || '';
-      document.getElementById('printDate').textContent = date.value || '';
-      document.getElementById('printHeure').textContent = heure.value || '';
+      document.getElementById('printDate').textContent = dateField.value || '';
+      document.getElementById('printHeure').textContent = heureField.value || '';
 
       document.getElementById('printRestart').textContent = restart.checked ? 'Oui' : 'Non';
       document.getElementById('printProtecline').textContent = protecline.checked ? 'Oui' : 'Non';
@@ -1151,7 +1166,7 @@
       document.getElementById('printTechApp').textContent = state.techYN || 'Non renseigné';
 
       document.getElementById('printCommentaireTech').innerHTML =
-        '<strong>Commentaire :</strong> ' + (document.getElementById('commentaire').value || '');
+        '<strong>Commentaire :</strong> ' + ((document.getElementById('commentaire').value || '').replace(/\n/g, '<br>'));
 
       document.getElementById('printPonctualite').textContent = state.ponctualite ? state.ponctualite + ' / 5' : '';
       document.getElementById('printClarte').textContent = state.clarte ? state.clarte + ' / 5' : '';
@@ -1180,6 +1195,17 @@
       document.getElementById('printSignature').src = state.signed ? c.toDataURL('image/png') : '';
     }
 
+    async function waitImagesLoaded(container) {
+      const images = Array.from(container.querySelectorAll('img'));
+      await Promise.all(images.map(function(img) {
+        if (img.complete) return Promise.resolve();
+        return new Promise(function(resolve) {
+          img.onload = resolve;
+          img.onerror = resolve;
+        });
+      }));
+    }
+
     async function generatePdf() {
       const { jsPDF } = window.jspdf;
       const element = document.getElementById('printSummary');
@@ -1187,12 +1213,16 @@
       const previousDisplay = element.style.display;
       element.style.display = 'block';
 
+      await waitImagesLoaded(element);
+
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
         backgroundColor: '#ffffff',
         scrollX: 0,
-        scrollY: 0
+        scrollY: 0,
+        windowWidth: element.scrollWidth,
+        windowHeight: element.scrollHeight
       });
 
       element.style.display = previousDisplay || 'none';
@@ -1221,7 +1251,7 @@
         heightLeft -= (pdfHeight - margin * 2);
       }
 
-      const fileDate = slugify(date.value || 'date');
+      const fileDate = slugify(dateField.value || 'date');
       const fileNom = slugify(nom.value || 'nom');
       const filePrenom = slugify(prenom.value || 'prenom');
       const fileInter = slugify(intervention.value || 'intervention');
@@ -1266,8 +1296,8 @@
 
     function init() {
       const n = new Date();
-      date.value = n.toLocaleDateString('fr-FR');
-      heure.value = n.toLocaleTimeString('fr-FR', {
+      dateField.value = n.toLocaleDateString('fr-FR');
+      heureField.value = n.toLocaleTimeString('fr-FR', {
         hour: '2-digit',
         minute: '2-digit'
       });
@@ -1278,7 +1308,7 @@
       stars('tech', 'tech');
       stars('inter', 'inter');
 
-      updatePhotoSection(false);
+      updatePhotoSection();
       showStep(1);
       checkLogin();
 
@@ -1298,19 +1328,28 @@
     window.addEventListener('resize', resizeCanvas);
 
     document.getElementById('loginPassword').addEventListener('keydown', function(e) {
-      if (e.key === 'Enter') {
-        loginApp();
-      }
+      if (e.key === 'Enter') loginApp();
     });
 
     document.getElementById('loginId').addEventListener('keydown', function(e) {
-      if (e.key === 'Enter') {
-        loginApp();
-      }
+      if (e.key === 'Enter') loginApp();
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js');
+      window.addEventListener('load', async function() {
+        try {
+          const reg = await navigator.serviceWorker.register('./sw.js?v=' + APP_VERSION, { updateViaCache: 'none' });
+          await reg.update();
+
+          navigator.serviceWorker.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'SW_UPDATED') {
+              window.location.reload();
+            }
+          });
+        } catch (err) {
+          console.error('Erreur service worker :', err);
+        }
+      });
     }
 
     init();
