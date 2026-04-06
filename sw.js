@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'compte-rendu-v7';
+const CACHE_VERSION = 'compte-rendu-v13';
 const APP_SHELL = [
   './',
   './index.html',
