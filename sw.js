@@ -1,74 +1,94 @@
-const CACHE_NAME = 'compte-rendu-v12';
+const CACHE_VERSION = 'compte-rendu-v7';
 const APP_SHELL = [
   './',
   './index.html',
-  './manifest.webmanifest',
-  './sw.js'
+  './manifest.webmanifest'
 ];
 
+// Installation
 self.addEventListener('install', (event) => {
   self.skipWaiting();
+
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL))
+    caches.open(CACHE_VERSION).then((cache) => {
+      return cache.addAll(APP_SHELL);
+    })
   );
 });
 
+// Activation
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
+    caches.keys().then((keys) => {
+      return Promise.all(
         keys.map((key) => {
-          if (key !== CACHE_NAME) {
+          if (key !== CACHE_VERSION) {
             return caches.delete(key);
           }
         })
-      )
-    ).then(() => self.clients.claim())
+      );
+    }).then(() => self.clients.claim())
   );
 });
 
+// Fetch
 self.addEventListener('fetch', (event) => {
   const request = event.request;
 
-  if (request.method !== 'GET') return;
+  // Ne gérer que GET
+  if (request.method !== 'GET') {
+    return;
+  }
 
   const url = new URL(request.url);
 
-  if (url.origin !== self.location.origin) return;
+  // Ignorer les extensions navigateur ou autres requêtes spéciales
+  if (
+    url.protocol !== 'http:' &&
+    url.protocol !== 'https:'
+  ) {
+    return;
+  }
 
+  // HTML : toujours essayer le réseau d'abord
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put('./index.html', clone);
+          const responseClone = response.clone();
+          caches.open(CACHE_VERSION).then((cache) => {
+            cache.put('./index.html', responseClone);
           });
           return response;
         })
-        .catch(() => caches.match('./index.html'))
+        .catch(() => {
+          return caches.match('./index.html');
+        })
     );
     return;
   }
 
+  // CDN / JS / CSS / images / manifest : cache first + mise à jour en fond
   event.respondWith(
-    fetch(request)
-      .then((response) => {
-        if (!response || response.status !== 200) {
-          return response;
-        }
-
-        const clone = response.clone();
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(request, clone);
-        });
-
-        return response;
-      })
-      .catch(() =>
-        caches.match(request).then((cached) => {
-          return cached || caches.match('./index.html');
+    caches.match(request).then((cachedResponse) => {
+      const fetchPromise = fetch(request)
+        .then((networkResponse) => {
+          if (
+            networkResponse &&
+            networkResponse.status === 200 &&
+            networkResponse.type === 'basic' ||
+            networkResponse.type === 'cors'
+          ) {
+            const responseClone = networkResponse.clone();
+            caches.open(CACHE_VERSION).then((cache) => {
+              cache.put(request, responseClone);
+            });
+          }
+          return networkResponse;
         })
-      )
+        .catch(() => cachedResponse);
+
+      return cachedResponse || fetchPromise;
+    })
   );
 });
